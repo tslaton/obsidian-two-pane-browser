@@ -5,6 +5,7 @@ import {
   getAllTags,
 } from 'obsidian'
 
+// https://stackoverflow.com/a/71896674
 export function getTags(files: TFile[], metadataCache: MetadataCache) {
   const allTags: string[] = []
   files.forEach(file => {
@@ -17,4 +18,11 @@ export function getTags(files: TFile[], metadataCache: MetadataCache) {
     }
   })
   return [... new Set(allTags)]
+}
+
+export function recurseChildren(obj: any, callback: (child: any) => void) {
+  for (let child of obj.children || []) {
+    callback(child)
+    recurseChildren(child, callback)
+  }
 }
