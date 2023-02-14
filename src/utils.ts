@@ -21,6 +21,9 @@ export function getTags(files: TFile[], metadataCache: MetadataCache) {
 }
 
 export function recurseChildren(obj: any, callback: (child: any) => void) {
+  if (!obj) {
+    return
+  }
   for (let child of obj.children || []) {
     callback(child)
     recurseChildren(child, callback)

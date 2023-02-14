@@ -25,6 +25,7 @@
 	},
 	"dependencies": {
 		"@emotion/react": "^11.10.5",
+		"lucide-react": "^0.113.0",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",
 		"reselect": "^4.1.7"

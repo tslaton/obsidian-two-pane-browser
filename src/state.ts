@@ -8,8 +8,9 @@ import { createSelector } from 'reselect'
 import { recurseChildren } from './utils'
 
 interface GlobalState {
-  fileTree: TFolder | null,
-  selectedFolders: string[],
+  fileTree: TFolder | null
+  isOpenByPath: Record<string, boolean>
+  isSelectedByPath: Record<string, boolean>
 }
 
 interface Action {
@@ -20,7 +21,8 @@ interface Action {
 export function initGlobalState(): GlobalState {
   return {
     fileTree: null,
-    selectedFolders: [],
+    isOpenByPath: {},
+    isSelectedByPath: {},
   }
 }
 
@@ -33,23 +35,19 @@ export const selectTopLevelFolders = createSelector(
       : []
   }
 )
-export const selectSelectedFolders = (state: GlobalState) => state.selectedFolders
+export const selectIsOpenByPath = (state: GlobalState) => state.isOpenByPath
+export const selectIsSelectedByPath = (state: GlobalState) => state.isSelectedByPath
+// TODO: this doesn't actually update
 export const selectFilesInScope = createSelector(
   selectFileTree,
-  selectSelectedFolders,
-  (fileTree, selectedFolders) => {
-    const selectedFoldersAsSet = new Set(selectedFolders)
+  selectIsSelectedByPath,
+  (fileTree, isSelectedByPath) => {
+    console.log('isSelectedByPath: ', isSelectedByPath)
     const filesInScope: TFile[] = []
-    recurseChildren(fileTree, fileOrFolder => {
-      if (fileOrFolder instanceof TFolder) {
-        const folder = fileOrFolder
-        if (selectedFoldersAsSet.has(folder.path)) {
-          for (let child of folder.children) {
-            if (child instanceof TFile) {
-              filesInScope.push(child)
-            }
-          }
-        }
+    recurseChildren(fileTree, f => {
+      if (f instanceof TFolder && isSelectedByPath[f.path]) {
+        const files = f.children.filter(child => child instanceof TFile) as TFile[]
+        filesInScope.push(...files)
       }
     })
     return filesInScope
@@ -58,8 +56,37 @@ export const selectFilesInScope = createSelector(
 
 export function reducer(state: GlobalState, action: Action) {
   switch(action.type) {
-    case 'LOAD_FILETREE':
-      return { ...state, fileTree: action.payload }
+    case 'LOAD_FILETREE': {
+      return { 
+        ...state, 
+        fileTree: action.payload,
+      }
+    }
+    case 'TOGGLE_IS_OPEN_BY_PATH': {
+      const path = action.payload
+      const isOpenByPath = state.isOpenByPath
+      const isOpen = !!isOpenByPath[path]
+      return {
+        ...state, 
+        isOpenByPath: { ...isOpenByPath, [path]: !isOpen },
+      }
+    }
+    case 'TOGGLE_IS_SELECTED_BY_PATH': {
+      const path = action.payload
+      const isSelectedByPath = state.isSelectedByPath
+      const isSelected = !!isSelectedByPath[path]
+      return {
+        ...state, 
+        isSelectedByPath: { ...isSelectedByPath, [path]: !isSelected },
+      }
+    }
+    case 'SELECT_BY_PATH': {
+      const path = action.payload
+      return {
+        ...state,
+        isSelectedByPath: { [path]: true },
+      }
+    }
     default:
       return state
   }
