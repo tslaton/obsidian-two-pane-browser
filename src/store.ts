@@ -6,6 +6,7 @@ import { recurseChildren } from './utils'
 import folderTreeReducer, { selectFolderTree, FileMeta } from './slices/folderTreeSlice'
 import isOpenByPathReducer, { selectIsOpenByPath } from './slices/isOpenByPathSlice'
 import isSelectedByPathReducer, { selectIsSelectedByPath } from './slices/isSelectedByPathSlice'
+import filePreviewsReducer from './slices/filePreviewsSlice'
 
 export const selectTopLevelFolders = createSelector(
   selectFolderTree,
@@ -30,6 +31,7 @@ const store = configureStore({
     folderTree: folderTreeReducer,
     isOpenByPath: isOpenByPathReducer,
     isSelectedByPath: isSelectedByPathReducer,
+    filePreviews: filePreviewsReducer,
   },
 })
 

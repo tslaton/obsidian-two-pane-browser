@@ -1,14 +1,15 @@
 // Libraries
-import { App, debounce } from 'obsidian'
+import { App, debounce, TFile } from 'obsidian'
 import * as React from 'react'
 import { css } from '@emotion/react'
 import { FolderIcon, FolderOpenIcon } from 'lucide-react'
 // Modules
 import { useAppDispatch, useAppSelector } from 'src/hooks'
 import { selectTopLevelFolders, selectFilesInScope } from 'src/store'
-import { FolderMeta, folderMetaFromTFolder, loadFileTree } from 'src/slices/folderTreeSlice'
+import { FileMeta, FolderMeta, folderMetaFromTFolder, loadFileTree } from 'src/slices/folderTreeSlice'
 import { selectIsOpenByPath, toggleIsOpenByPath } from 'src/slices/isOpenByPathSlice'
 import { selectIsSelectedByPath, toggleIsSelectedByPath } from 'src/slices/isSelectedByPathSlice'
+import { selectFilePreviewsByPath, loadFilePreviewsByPath, createFilePreviewFromContents } from 'src/slices/filePreviewsSlice'
 
 interface FolderProps {
   folder: FolderMeta
@@ -60,15 +61,23 @@ function Folder(props: FolderProps) {
   )
 }
 
-function FilePreview() {
-
+function FilePreview({ file } : { file: FileMeta } ) {
+  const filePreviewsByPath = useAppSelector(selectFilePreviewsByPath)
+  const preview = filePreviewsByPath[file.path]
+  return (
+    <div css={css`
+      height: 200px;
+      border-radius: 4px;
+    `}>
+      {preview}
+    </div>
+  )
 }
 
 export default function TwoPaneBrowser({ app } : { app: App }) {
   const dispatch = useAppDispatch()
   const topLevelFolders = useAppSelector(selectTopLevelFolders)
   const filesInScope = useAppSelector(selectFilesInScope)
-  console.log('filesInScope: ', filesInScope)
 
   function syncVault() {
     dispatch(loadFileTree(folderMetaFromTFolder(app.vault.getRoot())))
@@ -93,6 +102,19 @@ export default function TwoPaneBrowser({ app } : { app: App }) {
     }
   }, [])
 
+  React.useEffect(() => {
+    const fetchFilePreviews = async() => {
+      const filePreviewsByPath = {} as Record<string, string>
+      for (let file of filesInScope) {
+        const readableFile = app.vault.getAbstractFileByPath(file.path)
+        const contents = await app.vault.cachedRead(readableFile as TFile)
+        filePreviewsByPath[file.path] = createFilePreviewFromContents(contents)
+      }
+      dispatch(loadFilePreviewsByPath(filePreviewsByPath))
+    }
+    fetchFilePreviews()
+  }, [filesInScope])
+
   return (
     <div css={css`
       display: flex;
@@ -111,7 +133,10 @@ export default function TwoPaneBrowser({ app } : { app: App }) {
         flex: 1;
         background-color: #222;
       `}>
-        {/* right pane */}
+        <h2>Files</h2>
+        {filesInScope.map(f =>
+          <FilePreview key={f.path} file={f} />
+        )}
       </div>
     </div>
   )
