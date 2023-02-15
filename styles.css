@@ -7,3 +7,8 @@ div.workspace-tab-header-container-inner {
 div.workspace-leaf-content[data-type="search"] {
   /* display: none; */
 }
+
+/* disable default padding on two-pane-browser-view */ 
+div.workspace-leaf-content[data-type="two-pane-browser-view"] > div.view-content {
+  padding: 0;
+}

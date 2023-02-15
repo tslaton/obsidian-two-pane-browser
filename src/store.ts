@@ -6,7 +6,8 @@ import { recurseChildren } from './utils'
 import folderTreeReducer, { selectFolderTree, FileMeta } from './slices/folderTreeSlice'
 import isOpenByPathReducer, { selectIsOpenByPath } from './slices/isOpenByPathSlice'
 import isSelectedByPathReducer, { selectIsSelectedByPath } from './slices/isSelectedByPathSlice'
-import filePreviewsReducer from './slices/filePreviewsSlice'
+import filePreviewsByPathReducer from './slices/filePreviewsByPathSlice'
+import tagsByPathReducer from './slices/tagsByPathSlice'
 
 export const selectTopLevelFolders = createSelector(
   selectFolderTree,
@@ -16,13 +17,30 @@ export const selectFilesInScope = createSelector(
   selectFolderTree,
   selectIsSelectedByPath,
   (folderTree, isSelectedByPath) => {
-    const filesInScope: FileMeta[] = []
+    const filesInScope: Set<FileMeta> = new Set()
     recurseChildren(folderTree, f => {
       if (isSelectedByPath[f.path]) {
-        filesInScope.push(...f.files)
+        for (let file of f.files) {
+          filesInScope.add(file)
+        }
+        // if none of f's children are selected, consider all of them selected with f     
+        let hasSelectedChildren = false
+        for (let child of f.children) {
+         if (isSelectedByPath[child.path]) {
+           hasSelectedChildren = true
+           break
+          }
+        }
+        if (!hasSelectedChildren) {
+          for (let child of f.children) {
+            for (let file of child.files) {
+              filesInScope.add(file)
+            }
+          }
+        }
       }
     })
-    return filesInScope
+    return [...filesInScope].sort((a, b) => a.name.localeCompare(b.name))
   }
 )
 
@@ -31,7 +49,8 @@ const store = configureStore({
     folderTree: folderTreeReducer,
     isOpenByPath: isOpenByPathReducer,
     isSelectedByPath: isSelectedByPathReducer,
-    filePreviews: filePreviewsReducer,
+    filePreviewsByPath: filePreviewsByPathReducer,
+    tagsByPath: tagsByPathReducer,
   },
 })
 

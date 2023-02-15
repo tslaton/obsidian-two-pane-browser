@@ -1,5 +1,5 @@
 // Libraries
-import { TFolder, TFile } from 'obsidian'
+import { TFolder, TFile, FileStats } from 'obsidian'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 // Modules
 import type { RootState } from '../store'
@@ -7,6 +7,7 @@ import type { RootState } from '../store'
 export interface FileMeta {
   name: string
   path: string
+  stats: FileStats
 }
 
 export interface FolderMeta {
@@ -20,6 +21,7 @@ export function fileMetaFromTFile(file: TFile): FileMeta {
   return {
     name: file.name,
     path: file.path,
+    stats: file.stat,
   }
 }
 
@@ -38,7 +40,7 @@ export const folderTreeSlice = createSlice({
   name: 'folderTree',
   initialState: { name: '', path: '/', files: [], children: [] } as FolderMeta,
   reducers: {
-    loadFileTree: (state, action: PayloadAction<FolderMeta>) => {
+    loadFolderTree: (state, action: PayloadAction<FolderMeta>) => {
       const folderTree = action.payload
       state.files = folderTree.files
       state.children = folderTree.children
@@ -46,7 +48,7 @@ export const folderTreeSlice = createSlice({
   },
 })
 
-export const { loadFileTree } = folderTreeSlice.actions
+export const { loadFolderTree } = folderTreeSlice.actions
 
 export const selectFolderTree = (state: RootState) => state.folderTree
 

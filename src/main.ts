@@ -1,15 +1,8 @@
 // Libraries
 import { App, Plugin, PluginSettingTab, Setting } from 'obsidian'
 // Modules
-import TwoPaneBrowserView, { TWO_PANE_BROWSER_VIEW } from 'src/view'
-
-// Settings
-interface TwoPaneBrowserSettings {
-	mySetting: string
-}
-const DEFAULT_SETTINGS: TwoPaneBrowserSettings = {
-	mySetting: 'default'
-}
+import TwoPaneBrowserView, { TWO_PANE_BROWSER_VIEW } from './view'
+import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, tagColors } from './settings'
 
 export default class TwoPaneBrowserPlugin extends Plugin {
 	settings: TwoPaneBrowserSettings
@@ -32,9 +25,9 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 
 		this.registerView(
 			TWO_PANE_BROWSER_VIEW,
-			leaf => new TwoPaneBrowserView(leaf)
+			leaf => new TwoPaneBrowserView(leaf, this.settings)
 		)
-	
+
 		this.addRibbonIcon(
 			'folder-tree', 
 			'Open Two Pane Browser', 
@@ -86,19 +79,35 @@ class TwoPaneBrowserSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this
 		containerEl.empty()
-		containerEl.createEl('h2', {text: 'Settings for Two-Pane Browser'})
+		containerEl.createEl('h2', { text: 'Settings for Two-Pane Browser '})
+		containerEl.createEl('h3', { text: 'Tag colors' })
 
-		// TODO: replae with real settings
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					console.log('Secret: ' + value)
-					this.plugin.settings.mySetting = value
-					await this.plugin.saveSettings()
-				}))
+		for (let colorName of Object.keys(tagColors)) {
+			const setting = new Setting(containerEl)
+				.setName(colorName)
+				.setDesc('Tags listed here receive this style. Separate them by spaces.')
+				.addTextArea(textArea => {
+					textArea
+						.setPlaceholder('Enter tags, including #')
+						.setValue(this.plugin.settings.tagsByColorName[colorName])
+						.onChange(async (value) => {
+							this.plugin.settings.tagsByColorName[colorName] = value
+							await this.plugin.saveSettings()
+						})
+					textArea.inputEl.cols = 60
+					textArea.inputEl.rows = 8
+				})
+			// Style the setting like the tag
+			const nameEl = setting.nameEl
+			// @ts-ignore
+			const { pill, text } = tagColors[colorName]
+			let style = `
+				color: ${text}; 
+				background-color: ${pill};
+				padding: 0px 8px 2px 8px;
+				border-radius: 10px;
+			`
+			nameEl.innerHTML = `<span style="${style}">${nameEl.innerHTML}</span>`
+		}
 	}
 }

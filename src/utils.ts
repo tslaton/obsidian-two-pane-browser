@@ -1,24 +1,18 @@
-// // Libraries
-// import { 
-//   TFile, 
-//   MetadataCache,
-//   getAllTags,
-// } from 'obsidian'
+// Libraries
+import { TFile, MetadataCache, getAllTags } from 'obsidian'
 
-// // https://stackoverflow.com/a/71896674
-// export function getTags(files: TFile[], metadataCache: MetadataCache) {
-//   const allTags: string[] = []
-//   files.forEach(file => {
-//     const fileCache = metadataCache.getFileCache(file)
-//     if (fileCache) {
-//       const tags = getAllTags(fileCache) || []
-//       for (let tag of tags) {
-//         allTags.push(tag)
-//       }
-//     }
-//   })
-//   return [... new Set(allTags)]
-// }
+// https://stackoverflow.com/a/71896674
+export function getTags(file: TFile, metadataCache: MetadataCache) {
+  const allTags = new Set<string>()
+  const fileCache = metadataCache.getFileCache(file)
+  if (fileCache) {
+    const tags = getAllTags(fileCache) || []
+    for (let tag of tags) {
+      allTags.add(tag)
+    }
+  }
+  return [...allTags]
+}
 
 export function recurseChildren(obj: any, callback: (child: any) => void) {
   if (!obj) {
