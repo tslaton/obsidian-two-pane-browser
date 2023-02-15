@@ -1,10 +1,5 @@
 // Libraries
-import { 
-	App,
-	Plugin,
-	PluginSettingTab,
-	Setting,
-} from 'obsidian'
+import { App, Plugin, PluginSettingTab, Setting } from 'obsidian'
 // Modules
 import TwoPaneBrowserView, { TWO_PANE_BROWSER_VIEW } from 'src/view'
 

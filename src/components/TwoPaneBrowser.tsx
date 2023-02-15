@@ -1,48 +1,34 @@
 // Libraries
-import { 
-  App,
-  debounce,
-  TFolder,
-} from 'obsidian'
+import { App, debounce } from 'obsidian'
 import * as React from 'react'
 import { css } from '@emotion/react'
-import { 
-  FolderIcon, 
-  FolderOpenIcon, 
-} from 'lucide-react'
+import { FolderIcon, FolderOpenIcon } from 'lucide-react'
 // Modules
-import { getTags, recurseChildren } from '../utils'
-import { 
-  initGlobalState,
-  reducer,
-  selectTopLevelFolders,
-  selectIsOpenByPath,
-  selectIsSelectedByPath,
-  selectFilesInScope, 
-} from '../state'
+import { useAppDispatch, useAppSelector } from 'src/hooks'
+import { selectTopLevelFolders, selectFilesInScope } from 'src/store'
+import { FolderMeta, folderMetaFromTFolder, loadFileTree } from 'src/slices/folderTreeSlice'
+import { selectIsOpenByPath, toggleIsOpenByPath } from 'src/slices/isOpenByPathSlice'
+import { selectIsSelectedByPath, toggleIsSelectedByPath } from 'src/slices/isSelectedByPathSlice'
 
 interface FolderProps {
-  folder: TFolder
+  folder: FolderMeta
   level: number
 }
 
 function Folder(props: FolderProps) {
   const { folder, level } = props
-  const [state, dispatch] = React.useReducer(reducer, initGlobalState())
-  const isOpenByPath = selectIsOpenByPath(state)
-  const isSelectedByPath = selectIsSelectedByPath(state)
+  const dispatch = useAppDispatch()
+  const isOpenByPath = useAppSelector(selectIsOpenByPath)
   const isOpen = isOpenByPath[folder.path]
+  const isSelectedByPath = useAppSelector(selectIsSelectedByPath)
   const isSelected = isSelectedByPath[folder.path]
-  const childFolders = folder.children.filter(f => f instanceof TFolder) as TFolder[]
 
-  function toggleIsOpen(event: React.MouseEvent<HTMLDivElement>) {
-    event.preventDefault()
-    dispatch({ type: 'TOGGLE_IS_OPEN_BY_PATH', payload: folder.path })
+  function toggleIsOpen() {
+    dispatch(toggleIsOpenByPath(folder.path))
   }
 
-  function toggleIsSelected(event: React.MouseEvent<HTMLDivElement>) {
-    event.preventDefault()
-    dispatch({ type: 'TOGGLE_IS_SELECTED_BY_PATH', payload: folder.path })
+  function toggleIsSelected() {
+    dispatch(toggleIsSelectedByPath(folder.path))
   }
 
   let Icon = isOpen ? FolderOpenIcon : FolderIcon
@@ -57,8 +43,8 @@ function Folder(props: FolderProps) {
         padding: 10px;
         border-radius: 4px;
         background-color: ${isSelected ? '#333' : 'inherit' };
-      `} onClick={(e) => toggleIsSelected(e)}>
-        <div className='clickable-icon' onClick={(e) => toggleIsOpen(e)}>
+      `} onClick={() => toggleIsSelected()}>
+        <div className='clickable-icon' onClick={() => toggleIsOpen()}>
           <Icon size={18} />
         </div>
         <div css={css`
@@ -67,7 +53,7 @@ function Folder(props: FolderProps) {
           {folder.name}
         </div>
       </div>
-      {isOpen && childFolders.map(f => 
+      {isOpen && folder.children.map(f => 
         <Folder key={f.path} folder={f} level={level + 1} />
       )}
     </div>
@@ -79,15 +65,13 @@ function FilePreview() {
 }
 
 export default function TwoPaneBrowser({ app } : { app: App }) {
-  const [state, dispatch] = React.useReducer(reducer, initGlobalState())
-  const topLevelFolders = selectTopLevelFolders(state)
-  const filesInScope = selectFilesInScope(state)
+  const dispatch = useAppDispatch()
+  const topLevelFolders = useAppSelector(selectTopLevelFolders)
+  const filesInScope = useAppSelector(selectFilesInScope)
   console.log('filesInScope: ', filesInScope)
 
   function syncVault() {
-    console.log('called syncVault')
-    // TODO: fix bug - root does not change, does not pick up (top level) changes
-    dispatch({ type: 'LOAD_FILETREE', payload: app.vault.getRoot() })
+    dispatch(loadFileTree(folderMetaFromTFolder(app.vault.getRoot())))
   }
   const debouncedVaultSync = debounce(syncVault, 1000, true) 
 

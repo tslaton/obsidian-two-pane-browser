@@ -1,12 +1,11 @@
 // Libraries
-import { 
-  ItemView, 
-  WorkspaceLeaf,
-} from 'obsidian'
+import { ItemView, WorkspaceLeaf } from 'obsidian'
 import * as React from 'react'
 import { Root, createRoot } from "react-dom/client"
+import { Provider } from 'react-redux'
 // Modules
 import TwoPaneBrowser from './components/TwoPaneBrowser'
+import store from './store'
 
 export const TWO_PANE_BROWSER_VIEW = 'two-pane-browser-view'
 
@@ -34,7 +33,9 @@ export default class TwoPaneBrowserView extends ItemView {
     this.root = createRoot(this.containerEl.children[1])
     this.root.render(
       <React.StrictMode>
-        <TwoPaneBrowser app={this.app} />
+        <Provider store={store}>
+          <TwoPaneBrowser app={this.app} />
+        </Provider>
       </React.StrictMode>
     )
   }
