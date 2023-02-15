@@ -1,8 +1,9 @@
-/*
+/* hide the icons inline with macOS stoplights */
+div.workspace-tab-header-container-inner {
+  /* display: none; */
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
-
-*/
+/* hide the other sidebar tabs - eg., search */
+div.workspace-leaf-content[data-type="search"] {
+  /* display: none; */
+}
