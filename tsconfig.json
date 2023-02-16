@@ -17,8 +17,8 @@
       "ES6",
       "ES7"
     ],
-    "jsx": "react-jsx",
-    "jsxImportSource": "@emotion/react"
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js"
   },
   "include": [
     "**/*.ts"
