@@ -1,5 +1,16 @@
-// TODO: clean up structure of this file vs. main.ts and view.tsx
-export const tagColors = {
+// TODO: think about how these work with editor extensions:
+// https://marcus.se.net/obsidian-plugin-docs/editor/extensions
+// https://marcus.se.net/obsidian-plugin-docs/editor/extensions/decorations
+// Looks like I could do styling in JS or CSS
+// JS makes it easier to add dynamic/arbitrary CSS to tags
+// CSS seems slighly simpler/cleaner
+// Probably I'd store these in the settings and let the user create new ones
+export interface TagStyle {
+  text: string
+  pill: string
+}
+
+export const tagStyles = {
 	'berry-red': { pill: '#b8256f', text: 'white' },
 	'red': { pill: '#db4035', text: 'white' },
 	'orange': { pill: '#ff9933', text: 'black' },
@@ -21,11 +32,12 @@ export const tagColors = {
 	'gray': { pill: '#b8b8b8', text: 'black' },
 	'taupe': { pill: '#ccac93', text: 'black' },
 }
-export const DEFAULT_SETTINGS = {
-	tagsByColorName: Object.fromEntries(
-		Object.keys(tagColors).map(colorName => [colorName, ''])
-	),
+
+export function createTagStyle({ text, pill }: TagStyle) {
+  return `
+    color: ${text};
+    background-color: ${pill};
+    padding: 0px 8px 2px 8px;
+    border-radius: 10px;
+  `
 }
-
-export type TwoPaneBrowserSettings = Record<string, Record<string, string>>
-

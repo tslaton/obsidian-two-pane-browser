@@ -2,7 +2,7 @@
 import { TFolder, TFile, FileStats } from 'obsidian'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 // Modules
-import type { RootState } from '../store'
+import type { RootState } from '../plugin/store'
 
 export interface FileMeta {
   name: string

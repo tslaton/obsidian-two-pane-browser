@@ -5,9 +5,9 @@ import { css } from '@emotion/react'
 import { FolderIcon, FolderOpenIcon } from 'lucide-react'
 // Modules
 import { TwoPaneBrowserSettings, tagColors } from '../settings'
-import { getTags } from '../utils'
-import { useAppDispatch, useAppSelector } from '../hooks'
-import { selectTopLevelFolders, selectFilesInScope } from '../store'
+import { getTags } from '../common/utils'
+import { useAppDispatch, useAppSelector } from './hooks'
+import { selectTopLevelFolders, selectFilesInScope } from './store'
 import { FileMeta, FolderMeta, folderMetaFromTFolder, loadFolderTree } from '../slices/folderTreeSlice'
 import { selectIsOpenByPath, toggleIsOpenByPath } from '../slices/isOpenByPathSlice'
 import { selectIsSelectedByPath, toggleIsSelectedByPath } from '../slices/isSelectedByPathSlice'
@@ -116,7 +116,7 @@ function FilePreview({ file, colorNameByTag } : { file: FileMeta, colorNameByTag
   )
 }
 
-export default function TwoPaneBrowser({ app, settings } : { app: App, settings: TwoPaneBrowserSettings }) {
+export default function TwoPaneBrowser() {
   const dispatch = useAppDispatch()
   const topLevelFolders = useAppSelector(selectTopLevelFolders)
   const filesInScope = useAppSelector(selectFilesInScope)
@@ -128,27 +128,6 @@ export default function TwoPaneBrowser({ app, settings } : { app: App, settings:
       colorNameByTag[tag] = colorName
     }
   }
-
-  function syncVault() {
-    dispatch(loadFolderTree(folderMetaFromTFolder(app.vault.getRoot())))
-  }
-  const debouncedVaultSync = debounce(syncVault, 1000, true) 
-
-  React.useEffect(() => {
-    syncVault()
-
-    // Register handlers for vault updates
-    app.vault.on('create', debouncedVaultSync)
-    app.vault.on('delete', debouncedVaultSync)
-    app.vault.on('rename', debouncedVaultSync)
-
-    return () => {
-      // Unregister vault update handlers
-      app.vault.off('create', debouncedVaultSync)
-      app.vault.off('delete', debouncedVaultSync)
-      app.vault.off('rename', debouncedVaultSync)
-    }
-  }, [])
 
   React.useEffect(() => {
     // TODO: previews will depend on selected tags, search query, etc. too

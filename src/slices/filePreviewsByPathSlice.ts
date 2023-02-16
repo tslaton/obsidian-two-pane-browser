@@ -1,7 +1,7 @@
 // Libraries
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 // Modules
-import type { RootState } from '../store'
+import type { RootState } from '../plugin/store'
 
 export function createFilePreview(fileContents: string, numLines=2) {
   let preview = ''

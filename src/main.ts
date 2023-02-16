@@ -1,12 +1,13 @@
 // Libraries
-import { App, Plugin, PluginSettingTab, Setting } from 'obsidian'
+import { Plugin } from 'obsidian'
 // Modules
-import TwoPaneBrowserView, { TWO_PANE_BROWSER_VIEW } from './view'
-import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, tagColors } from './settings'
+import store from './plugin/store'
+import TwoPaneBrowserView, { TWO_PANE_BROWSER_VIEW } from './plugin/view'
+import { TwoPaneBrowserSettingTab } from './features/settings/settingsTab'
+import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, loadSettings } from './features/settings/settingsSlice'
+import { loadFolderTree } from './slices/folderTreeSlice'
 
 export default class TwoPaneBrowserPlugin extends Plugin {
-	settings: TwoPaneBrowserSettings
-
 	async activateView() {
 		this.app.workspace.detachLeavesOfType(TWO_PANE_BROWSER_VIEW)
 
@@ -25,7 +26,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 
 		this.registerView(
 			TWO_PANE_BROWSER_VIEW,
-			leaf => new TwoPaneBrowserView(leaf, this.settings)
+			leaf => new TwoPaneBrowserView(leaf)
 		)
 
 		this.addRibbonIcon(
@@ -36,78 +37,52 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 			}
 		)
 
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-two-pane-browser',
-			name: 'Open Two Pane Browser',
-			hotkeys: [{ modifiers: ["Mod", "Shift"], key: "m" }],
-			callback: () => {
-				// TODO
-				console.log('called open-two-pane-browser')
-			}
-		})
-
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new TwoPaneBrowserSettingTab(this.app, this))
 
+		store.dispatch(loadFolderTree(this.app.vault.getRoot()))
+		// Register handlers for vault updates
+		this.app.vault.on('create', this.createFileOrFolder)
+		this.app.vault.on('delete', this.deleteFileOrFolder)
+		this.app.vault.on('rename', this.renameFileOrFolder)
+		this.app.vault.on('modify', this.modifyFileOrFolder)
+
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		// TODO: refresh the tag and file lists periodically? Or on change?
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000))
+		// TODO: refresh the tag and file lists periodically as a failsafe?
+		// this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000))
 	}
 
 	onunload() {
 		this.app.workspace.detachLeavesOfType(TWO_PANE_BROWSER_VIEW)
+		this.app.vault.off('create', this.createFileOrFolder)
+		this.app.vault.off('delete', this.deleteFileOrFolder)
+		this.app.vault.off('rename', this.renameFileOrFolder)
+		this.app.vault.off('modify', this.modifyFileOrFolder)
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData())
+		const settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData())
+		store.dispatch(loadSettings(settings))
 	}
 
-	async saveSettings() {
-		await this.saveData(this.settings)
-	}
-}
-
-class TwoPaneBrowserSettingTab extends PluginSettingTab {
-	plugin: TwoPaneBrowserPlugin
-
-	constructor(app: App, plugin: TwoPaneBrowserPlugin) {
-		super(app, plugin)
-		this.plugin = plugin
+	async saveSettings(settings: TwoPaneBrowserSettings) {
+		await this.saveData(settings)
+		store.dispatch(loadSettings(settings))
 	}
 
-	display(): void {
-		const { containerEl } = this
-		containerEl.empty()
-		containerEl.createEl('h2', { text: 'Settings for Two-Pane Browser '})
-		containerEl.createEl('h3', { text: 'Tag colors' })
+	createFileOrFolder(f: TAbstractFile) {
 
-		for (let colorName of Object.keys(tagColors)) {
-			const setting = new Setting(containerEl)
-				.setName(colorName)
-				.setDesc('Tags listed here receive this style. Separate them by spaces.')
-				.addTextArea(textArea => {
-					textArea
-						.setPlaceholder('Enter tags, including #')
-						.setValue(this.plugin.settings.tagsByColorName[colorName])
-						.onChange(async (value) => {
-							this.plugin.settings.tagsByColorName[colorName] = value
-							await this.plugin.saveSettings()
-						})
-					textArea.inputEl.cols = 60
-					textArea.inputEl.rows = 8
-				})
-			// Style the setting like the tag
-			const nameEl = setting.nameEl
-			// @ts-ignore
-			const { pill, text } = tagColors[colorName]
-			let style = `
-				color: ${text}; 
-				background-color: ${pill};
-				padding: 0px 8px 2px 8px;
-				border-radius: 10px;
-			`
-			nameEl.innerHTML = `<span style="${style}">${nameEl.innerHTML}</span>`
-		}
+	}
+
+	deleteFileOrFolder(f: TAbstractFile) {
+
+	}
+
+	renameFileOrFolder(f: TAbstractFile) {
+
+	}
+
+	modifyFileOrFolder(f: TAbstractFile) {
+
 	}
 }

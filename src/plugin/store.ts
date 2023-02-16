@@ -2,12 +2,15 @@
 import { createSelector } from 'reselect'
 import { configureStore } from '@reduxjs/toolkit'
 // Modules
-import { recurseChildren } from './utils'
-import folderTreeReducer, { selectFolderTree, FileMeta } from './slices/folderTreeSlice'
-import isOpenByPathReducer, { selectIsOpenByPath } from './slices/isOpenByPathSlice'
-import isSelectedByPathReducer, { selectIsSelectedByPath } from './slices/isSelectedByPathSlice'
-import filePreviewsByPathReducer from './slices/filePreviewsByPathSlice'
-import tagsByPathReducer from './slices/tagsByPathSlice'
+import { recurseChildren } from '../common/utils'
+import settingsReducer from '../features/settings/settingsSlice'
+import foldersReducer from '../features/folders/foldersSlice'
+import filesReducer from '../features/files/filesSlice'
+import folderTreeReducer, { selectFolderTree, FileMeta } from '../slices/folderTreeSlice'
+import isOpenByPathReducer, { selectIsOpenByPath } from '../slices/isOpenByPathSlice'
+import isSelectedByPathReducer, { selectIsSelectedByPath } from '../slices/isSelectedByPathSlice'
+import filePreviewsByPathReducer from '../slices/filePreviewsByPathSlice'
+import tagsByPathReducer from '../slices/tagsByPathSlice'
 
 export const selectTopLevelFolders = createSelector(
   selectFolderTree,
@@ -46,6 +49,9 @@ export const selectFilesInScope = createSelector(
 
 const store = configureStore({
   reducer: {
+    settings: settingsReducer,
+    folders: foldersReducer,
+    files: filesReducer,
     folderTree: folderTreeReducer,
     isOpenByPath: isOpenByPathReducer,
     isSelectedByPath: isSelectedByPathReducer,
