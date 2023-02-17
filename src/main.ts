@@ -62,7 +62,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		this.app.metadataCache.on('changed', this.metadataCacheChanged)
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log(store.getState()), 30 * 1000))
+		// this.registerInterval(window.setInterval(() => console.log(store.getState()), 10 * 1000))
 	}
 
 	onunload() {
@@ -160,16 +160,15 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 	}
 
 	async fetchFiles(pathsInScope: Set<string>=new Set()) {
-		const root = this.app.vault.getRoot()
 		const files: FileMeta[] = []
-		Vault.recurseChildren(root, async f => {
-			if (f instanceof TFile) {
-				if (pathsInScope.size === 0 || pathsInScope.has(getParentPath(f))) {
-					const file = await this.inflatedFileMetaFromTFile(f)
-					files.push(file)
-				}
+		const fs = this.app.vault.getMarkdownFiles()
+		for (let f of fs) {
+			if (pathsInScope.size === 0 || pathsInScope.has(getParentPath(f))) {
+				// FUTURE: inflate only the files that will render in the viewport?
+				const file = await this.inflatedFileMetaFromTFile(f)
+				files.push(file)
 			}
-		})
+		} 		
 		if (files.length) {
 			// FUTURE: decide whether to load or upsert here... we only ever care about files in scope right?
 			store.dispatch(loadFiles(files))
@@ -179,7 +178,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 	async createFileOrFolder(f: TAbstractFile) {
 		if (f instanceof TFile) {
 			const file = await this.inflatedFileMetaFromTFile(f)
-			store.dispatch(addFile(file))
+			store.dispatch(addFile({ ...file, isSelected: false }))
 		}
 		else if (f instanceof TFolder) {
 			const folder = this.folderMetaFromTFolder(f)
@@ -196,19 +195,25 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		}
 	}
 
-	renameFileOrFolder(f: TAbstractFile) {
+	async renameFileOrFolder(f: TAbstractFile, oldPath: string) {
 		if (f instanceof TFile) {
-			const file = this.fileMetaFromTFile(f)
-			store.dispatch(updateFile({ id: file.path, changes: file }))
+			const file = await this.inflatedFileMetaFromTFile(f)
+			store.dispatch(updateFile({ id: oldPath, changes: file }))
 		}
 		else if (f instanceof TFolder) {
 			const folder = this.folderMetaFromTFolder(f)
-			store.dispatch(updateFolder({ id: folder.path, changes: folder }))
+			store.dispatch(updateFolder({ id: oldPath, changes: folder }))
 		}
 	}
 
 	async metadataCacheChanged(f: TFile, data: string, cache: CachedMetadata) {
 		const file = await this.inflatedFileMetaFromTFile(f, cache)
 		store.dispatch(updateFile({id: file.path, changes: file }))
+	}
+
+	openFile(file: FileMeta) {
+		const f = this.app.vault.getAbstractFileByPath(file.path) as TFile
+		const fileLeaf = this.app.workspace.getLeaf()
+		fileLeaf.openFile(f)
 	}
 }

@@ -14,7 +14,11 @@ export interface FileMeta {
   tags: string[]
 }
 
-const filesAdapter = createEntityAdapter<FileMeta>({
+export interface SelectableFile extends FileMeta {
+  isSelected: boolean
+}
+
+const filesAdapter = createEntityAdapter<SelectableFile>({
   selectId: file => file.path,
   sortComparer: (a, b) => a.name.localeCompare(b.name),
 })
@@ -24,15 +28,25 @@ export const filesSlice = createSlice({
   initialState: filesAdapter.getInitialState(),
   reducers: {
     loadFiles(state, action: PayloadAction<FileMeta[]>) {
-      filesAdapter.setAll(state, action.payload)
+      const selectableFiles = action.payload.map(file => ({...file, isSelected: false}))
+      filesAdapter.setAll(state, selectableFiles)
     },
     addFile: filesAdapter.addOne,
     updateFile: filesAdapter.updateOne,
     removeFile: filesAdapter.removeOne,
+    selectFile(state, action: PayloadAction<string>) {
+      const path = action.payload
+      for (let id of state.ids) {
+        const file = state.entities[id]
+        if (file) {
+          file.isSelected = (id === path)
+        }
+      }
+    }
   },
 })
 
-export const { loadFiles, addFile, updateFile, removeFile } = filesSlice.actions
+export const { loadFiles, addFile, updateFile, removeFile, selectFile } = filesSlice.actions
 
 export const filesSelectors = filesAdapter.getSelectors<RootState>(
   state => state.files
