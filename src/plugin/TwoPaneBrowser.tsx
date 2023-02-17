@@ -15,7 +15,7 @@ export default function TwoPaneBrowser() {
   const plugin = React.useContext(PluginContext)
 
   React.useEffect(() => {
-    // TODO: even loading here, it seems somethings the files/tags are caught and sometimes they are not
+    // TODO: even loading here, it seems sometimes the files/tags are caught and sometimes they are not
     plugin.syncVaultFiles()
   }, [])
 

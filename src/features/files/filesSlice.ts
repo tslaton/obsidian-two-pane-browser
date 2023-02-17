@@ -14,24 +14,6 @@ export interface FileMeta {
   tags: string[]
 }
 
-export function createFilePreview(fileContents: string, numLines=2) {
-  let preview = ''
-  const lines = fileContents.split('\n')
-  let lineCount = 0
-  for (let line of lines) {
-    if (lineCount >= numLines) {
-      break
-    }
-    // Strip out tags and afterward, blank lines
-    line = line.replace(/#\S+/g, '').replace(/\s+/g, ' ').trim()
-    if (line) {
-      preview += `${line}\n`
-      lineCount += 1
-    }
-  }
-  return preview.trim()
-}
-
 const filesAdapter = createEntityAdapter<FileMeta>({
   selectId: file => file.path,
   sortComparer: (a, b) => a.name.localeCompare(b.name),
@@ -45,32 +27,12 @@ export const filesSlice = createSlice({
       filesAdapter.setAll(state, action.payload)
     },
     addFile: filesAdapter.addOne,
-    // TODO: possibly combine all of these into modifyFile
-    updateFilePreview(state, action: PayloadAction<{ path: string, preview: string }>) {
-      const { path, preview } = action.payload
-      const file = state.entities[path]
-      if (file) {
-        file.preview = preview
-      }
-    },
-    updateFileStats(state, action: PayloadAction<{ path: string, stat: FileStats }>) {
-      const { path, stat } = action.payload
-      const file = state.entities[path]
-      if (file) {
-        file.stat = stat
-      }
-    },
-    updateFileTags(state, action: PayloadAction<{ path: string, tags: string[] }>) {
-      const { path, tags } = action.payload
-      const file = state.entities[path]
-      if (file) {
-        file.tags = tags
-      }
-    },
+    updateFile: filesAdapter.updateOne,
+    removeFile: filesAdapter.removeOne,
   },
 })
 
-export const { loadFiles, addFile, updateFilePreview, updateFileTags } = filesSlice.actions
+export const { loadFiles, addFile, updateFile, removeFile } = filesSlice.actions
 
 export const filesSelectors = filesAdapter.getSelectors<RootState>(
   state => state.files
@@ -79,6 +41,7 @@ export const selectFilesInScope = createSelector(
   filesSelectors.selectAll,
   selectFoldersInScope,
   (files, foldersInScope) => {
+    console.log('selectFilesInScope called: ', files, foldersInScope)
     // TODO: actually this isn't fully correct logic - eg., notes selection doesn't grab notes/ai
     // TODO: cut out the middle man here?
     const pathsInScope = new Set(foldersInScope.map(folder => folder.path))

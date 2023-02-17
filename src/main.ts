@@ -1,14 +1,26 @@
 // Libraries
-import { Plugin, Vault, TAbstractFile, TFile, TFolder, getAllTags } from 'obsidian'
+import { 
+	App, Plugin, PluginManifest, 
+	Vault, TAbstractFile, TFile, TFolder, 
+	CachedMetadata, getAllTags,
+} from 'obsidian'
 // Modules
 import store from './plugin/store'
 import TwoPaneBrowserView, { TWO_PANE_BROWSER_VIEW } from './plugin/view'
 import TwoPaneBrowserSettingTab from './features/settings/TwoPaneBrowserSettingTab'
 import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, loadSettings } from './features/settings/settingsSlice'
-import { FileMeta, createFilePreview, loadFiles, addFile } from './features/files/filesSlice'
-import { FolderMeta, loadFolders, addFolder } from './features/folders/foldersSlice'
+import { FileMeta, loadFiles, addFile, updateFile, removeFile } from './features/files/filesSlice'
+import { FolderMeta, loadFolders, addFolder, updateFolder, removeFolder } from './features/folders/foldersSlice'
 
 export default class TwoPaneBrowserPlugin extends Plugin {
+	constructor(app: App, manifest: PluginManifest) {
+		super(app, manifest)
+		this.createFileOrFolder = this.createFileOrFolder.bind(this)
+		this.deleteFileOrFolder = this.deleteFileOrFolder.bind(this)
+		this.renameFileOrFolder = this.renameFileOrFolder.bind(this)
+		this.metadataCacheChanged = this.metadataCacheChanged.bind(this)
+	}
+
 	async activateView() {
 		this.app.workspace.detachLeavesOfType(TWO_PANE_BROWSER_VIEW)
 
@@ -42,10 +54,11 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		this.addSettingTab(new TwoPaneBrowserSettingTab(this.app, this))
 
 		// Register handlers for vault updates
-		this.app.vault.on('create', this.createFileOrFolder.bind(this))
-		this.app.vault.on('delete', this.deleteFileOrFolder.bind(this))
-		this.app.vault.on('rename', this.renameFileOrFolder.bind(this))
-		this.app.vault.on('modify', this.modifyFileOrFolder.bind(this))
+		this.app.vault.on('create', this.createFileOrFolder)
+		this.app.vault.on('delete', this.deleteFileOrFolder)
+		this.app.vault.on('rename', this.renameFileOrFolder)
+		// Register handlers for metadata cache updates
+		this.app.metadataCache.on('changed', this.metadataCacheChanged)
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
 		this.registerInterval(window.setInterval(() => console.log(store.getState()), 30 * 1000))
@@ -53,10 +66,10 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 
 	onunload() {
 		this.app.workspace.detachLeavesOfType(TWO_PANE_BROWSER_VIEW)
-		this.app.vault.off('create', this.createFileOrFolder.bind(this))
-		this.app.vault.off('delete', this.deleteFileOrFolder.bind(this))
-		this.app.vault.off('rename', this.renameFileOrFolder.bind(this))
-		this.app.vault.off('modify', this.modifyFileOrFolder.bind(this))
+		this.app.vault.off('create', this.createFileOrFolder)
+		this.app.vault.off('delete', this.deleteFileOrFolder)
+		this.app.vault.off('rename', this.renameFileOrFolder)
+		this.app.metadataCache.off('changed', this.metadataCacheChanged)
 	}
 
 	async loadSettings() {
@@ -69,17 +82,46 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		store.dispatch(loadSettings(settings))
 	}
 
-	async fileMetaFromTFile(file: TFile): Promise<FileMeta> {
+	async fileMetaFromTFile(file: TFile, fileCache: CachedMetadata|null=null): Promise<FileMeta> {
 		// TODO: delay this work until we're actually looking at it
 		const contents = await app.vault.cachedRead(file)
-		const preview = createFilePreview(contents)
-		const tags = this.getTags(file)
+		const createFilePreview = (numLines=2) => {
+			let preview = ''
+			const lines = contents.split('\n')
+			let lineCount = 0
+			for (let line of lines) {
+				if (lineCount >= numLines) {
+					break
+				}
+				// Strip out tags and afterward, blank lines
+				line = line.replace(/#\S+/g, '').replace(/\s+/g, ' ').trim()
+				if (line) {
+					preview += `${line}\n`
+					lineCount += 1
+				}
+			}
+			return preview.trim()
+		}
+		// https://stackoverflow.com/a/71896674
+		const getTags = () => {
+			const allTags = new Set<string>()
+			if (!fileCache) {
+				fileCache = this.app.metadataCache.getFileCache(file)
+			} 
+			if (fileCache) {
+				const tags = getAllTags(fileCache) || []
+				for (let tag of tags) {
+					allTags.add(tag)
+				}
+			}
+			return [...allTags]
+		}
 		return {
 			name: file.name,
 			path: file.path,
 			stat: file.stat,
-			preview,
-			tags
+			preview: createFilePreview(),
+			tags: getTags(),
 		}
 	}
 
@@ -90,19 +132,6 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 			isExpanded: false,
 			isSelected: false,
 		}
-	}
-
-	// https://stackoverflow.com/a/71896674
-	getTags(file: TFile) {
-		const allTags = new Set<string>()
-		const fileCache = this.app.metadataCache.getFileCache(file)
-		if (fileCache) {
-			const tags = getAllTags(fileCache) || []
-			for (let tag of tags) {
-				allTags.add(tag)
-			}
-		}
-		return [...allTags]
 	}
 
 	async syncVaultFiles() {
@@ -127,8 +156,8 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		}
 	}
 
-	// TODO: finish these
 	async createFileOrFolder(f: TAbstractFile) {
+		console.log('createFileOrFolder: ', f)
 		if (f instanceof TFile) {
 			const file = await this.fileMetaFromTFile(f)
 			store.dispatch(addFile(file))
@@ -139,15 +168,32 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		}
 	}
 
-	deleteFileOrFolder(f: TAbstractFile) {
-		// console.log('deleteFileOrFolder: ', f)
+	async deleteFileOrFolder(f: TAbstractFile) {
+		console.log('deleteFileOrFolder: ', f)
+		if (f instanceof TFile) {
+			store.dispatch(removeFile(f.path))
+		}
+		else if (f instanceof TFolder) {
+			store.dispatch(removeFolder(f.path))
+		}
 	}
 
-	renameFileOrFolder(f: TAbstractFile) {
-		// console.log('renameFileOrFolder: ', f)
+	async renameFileOrFolder(f: TAbstractFile) {
+		console.log('renameFileOrFolder: ', f)
+		if (f instanceof TFile) {
+			const file = await this.fileMetaFromTFile(f)
+			store.dispatch(updateFile({ id: file.path, changes: file }))
+		}
+		else if (f instanceof TFolder) {
+			const folder = this.folderMetaFromTFolder(f)
+			store.dispatch(updateFolder({ id: folder.path, changes: folder }))
+		}
 	}
 
-	modifyFileOrFolder(f: TAbstractFile) {
-		// console.log('modifyFileOrFolder: ', f)
+	async metadataCacheChanged(f: TFile, data: string, cache: CachedMetadata) {
+		// TODO: leverage cache.sections to do Headers in previews
+		console.log('metadataCacheChanged: ', f, data, cache)
+		const file = await this.fileMetaFromTFile(f, cache)
+		store.dispatch(updateFile({id: file.path, changes: file }))
 	}
 }

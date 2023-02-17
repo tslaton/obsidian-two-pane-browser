@@ -24,6 +24,8 @@ export const foldersSlice = createSlice({
       foldersAdapter.setAll(state, action.payload)
     },
     addFolder: foldersAdapter.addOne,
+    updateFolder: foldersAdapter.updateOne,
+    removeFolder: foldersAdapter.removeOne,
     toggleFolderExpansion(state, action: PayloadAction<string>) {
       const path = action.payload
       const folder = state.entities[path]
@@ -56,7 +58,10 @@ export const foldersSlice = createSlice({
   },
 })
 
-export const { loadFolders, addFolder, toggleFolderExpansion, toggleFolderSelection, selectFolder } = foldersSlice.actions
+export const { 
+  loadFolders, addFolder, updateFolder, removeFolder,
+  toggleFolderExpansion, toggleFolderSelection, selectFolder, 
+} = foldersSlice.actions
 
 export const foldersSelectors = foldersAdapter.getSelectors<RootState>(
   state => state.folders
