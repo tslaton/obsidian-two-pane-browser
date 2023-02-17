@@ -59,7 +59,7 @@ export default function Tag(props: TagProps) {
 
   return (
     <div css={css`
-      ${createTagStyle(stylesByTag[tag])}
+      ${createTagStyle(stylesByTag[tag] || tagStyles.gray)}
       margin-left: 4px;
     `}>
       {tag}      

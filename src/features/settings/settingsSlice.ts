@@ -35,7 +35,7 @@ export const selectStylesByTag = createSelector(
       tags = tags.map(tag => tag.trim()).filter(tag => tag.startsWith('#'))
       for (let tag of tags) {
         // @ts-ignore
-        stylesByTag[tag] = tagStyles[styleName] || tagStyles.gray
+        stylesByTag[tag] = tagStyles[styleName]
       }
     }
     return stylesByTag

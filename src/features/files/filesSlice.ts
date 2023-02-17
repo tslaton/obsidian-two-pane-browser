@@ -80,7 +80,6 @@ export const selectFilesInScope = createSelector(
   selectFoldersInScope,
   (files, foldersInScope) => {
     // TODO: actually this isn't fully correct logic - eg., notes selection doesn't grab notes/ai
-    // might be better to do with forced selection/deselect anyway
     // TODO: cut out the middle man here?
     const pathsInScope = new Set(foldersInScope.map(folder => folder.path))
     const filteredFiles = files.filter(file => pathsInScope.has(getParentPath(file.name, file.path)))

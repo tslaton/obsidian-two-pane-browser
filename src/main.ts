@@ -27,7 +27,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 
 		this.registerView(
 			TWO_PANE_BROWSER_VIEW,
-			leaf => new TwoPaneBrowserView(leaf)
+			leaf => new TwoPaneBrowserView(leaf, this)
 		)
 
 		this.addRibbonIcon(
@@ -40,15 +40,6 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new TwoPaneBrowserSettingTab(this.app, this))
-
-		// TODO: determine why these are empty and if there's a better time to do this
-		const { folders, files } = await this.parseFilesAndFolders(this.app.vault.getRoot())
-		if (folders.length) {
-			store.dispatch(loadFolders(folders))
-		}
-		if (files.length) {
-			store.dispatch(loadFiles(files))
-		}
 
 		// Register handlers for vault updates
 		this.app.vault.on('create', this.createFileOrFolder.bind(this))
@@ -105,7 +96,6 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 	getTags(file: TFile) {
 		const allTags = new Set<string>()
 		const fileCache = this.app.metadataCache.getFileCache(file)
-		console.log('getTags: ', fileCache)
 		if (fileCache) {
 			const tags = getAllTags(fileCache) || []
 			for (let tag of tags) {
@@ -115,7 +105,8 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		return [...allTags]
 	}
 
-	async parseFilesAndFolders(root: TFolder) {
+	async syncVaultFiles() {
+		const root = this.app.vault.getRoot()
 		const folders: FolderMeta[] = []
 		const files: FileMeta[] = []
 		Vault.recurseChildren(root, async f => {
@@ -128,7 +119,12 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 				folders.push(folder)
 			}
 		})
-		return { folders, files }
+		if (folders.length) {
+			store.dispatch(loadFolders(folders))
+		}
+		if (files.length) {
+			store.dispatch(loadFiles(files))
+		}
 	}
 
 	// TODO: finish these

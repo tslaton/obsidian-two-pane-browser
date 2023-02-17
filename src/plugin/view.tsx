@@ -4,6 +4,8 @@ import * as React from 'react'
 import { Root, createRoot } from "react-dom/client"
 import { Provider } from 'react-redux'
 // Modules
+import type TwoPaneBrowserPlugin from '../main'
+import PluginContext from './PluginContext'
 import TwoPaneBrowser from './TwoPaneBrowser'
 import store from './store'
 
@@ -11,9 +13,11 @@ export const TWO_PANE_BROWSER_VIEW = 'two-pane-browser-view'
 
 export default class TwoPaneBrowserView extends ItemView {
   root?: Root
+  plugin
 
-  constructor(leaf: WorkspaceLeaf) {
+  constructor(leaf: WorkspaceLeaf, plugin: TwoPaneBrowserPlugin) {
     super(leaf)
+    this.plugin = plugin
   }
 
   getViewType() {
@@ -35,9 +39,11 @@ export default class TwoPaneBrowserView extends ItemView {
     this.root = createRoot(this.containerEl.children[1])
     this.root.render(
       <React.StrictMode>
-        <Provider store={store}>
-          <TwoPaneBrowser />
-        </Provider>
+        <PluginContext.Provider value={this.plugin}>
+          <Provider store={store}>
+            <TwoPaneBrowser />
+          </Provider>
+        </PluginContext.Provider>
       </React.StrictMode>
     )
   }

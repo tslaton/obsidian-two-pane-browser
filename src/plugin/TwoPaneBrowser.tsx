@@ -3,6 +3,7 @@ import * as React from 'react'
 import styled from '@emotion/styled'
 // Modules
 import { useAppSelector } from './hooks'
+import PluginContext from './PluginContext'
 import Folder from '../features/folders/Folder'
 import { selectTopLevelFolders } from '../features/folders/foldersSlice'
 import FilePreview from '../features/files/FilePreview'
@@ -11,6 +12,12 @@ import { selectFilesInScope } from '../features/files/filesSlice'
 export default function TwoPaneBrowser() {
   const topLevelFolders = useAppSelector(selectTopLevelFolders)
   const filesInScope = useAppSelector(selectFilesInScope)
+  const plugin = React.useContext(PluginContext)
+
+  React.useEffect(() => {
+    // TODO: even loading here, it seems somethings the files/tags are caught and sometimes they are not
+    plugin.syncVaultFiles()
+  }, [])
 
   return (
     <StyledTwoPaneBrowser>

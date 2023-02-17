@@ -85,11 +85,24 @@ export const selectFoldersInScope = createSelector(
   folders => {
     const selectedFolders = folders.filter(folder => folder.isSelected)
     // If a child of folder has been selected, eliminate its parent scope
-    const scopesToEliminate = new Set<string>()
-    for (let folder of selectedFolders) {
-      scopesToEliminate.add(getParentPath(folder.name, folder.path))
+    // TODO: better to do with programmatic select/deselect
+    // const scopesToEliminate = new Set<string>()
+    // for (let folder of selectedFolders) {
+    //   scopesToEliminate.add(getParentPath(folder.name, folder.path))
+    // }
+    // return selectedFolders.filter(folder => !scopesToEliminate.has(folder.path))
+    
+    // Consider the descendants of a folder selected
+    const foldersInScope = new Set<FolderMeta>()
+    const selectedPaths = new Set(selectedFolders.map(folder => folder.path))
+    for (let folder of folders) {
+      for (let selectedPath of selectedPaths) {
+        if (folder.path.startsWith(selectedPath)) {
+          foldersInScope.add(folder)
+        }
+      }
     }
-    return selectedFolders.filter(folder => !scopesToEliminate.has(folder.path))
+    return [...foldersInScope]
   }
 )
 
