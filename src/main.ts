@@ -83,8 +83,6 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		store.dispatch(loadSettings(settings))
 	}
 
-	// FUTURE: delay this work until we're actually looking at it
-	// Really, only want previews for files in viewport (but tags are important always for filtering)
 	async inflatedFileMetaFromTFile(file: TFile, fileCache: CachedMetadata|null=null): Promise<FileMeta> {
 		const contents = await app.vault.cachedRead(file)
 		// FUTURE: leverage cache.sections to do Headers in previews
@@ -165,12 +163,12 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		for (let f of fs) {
 			if (pathsInScope.size === 0 || pathsInScope.has(getParentPath(f))) {
 				// FUTURE: inflate only the files that will render in the viewport?
+				// Need tags for all files in scope but previews only for viewport...
 				const file = await this.inflatedFileMetaFromTFile(f)
 				files.push(file)
 			}
 		} 		
 		if (files.length) {
-			// FUTURE: decide whether to load or upsert here... we only ever care about files in scope right?
 			store.dispatch(loadFiles(files))
 		}
 	}
