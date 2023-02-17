@@ -11,6 +11,7 @@ import TwoPaneBrowserSettingTab from './features/settings/TwoPaneBrowserSettingT
 import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, loadSettings } from './features/settings/settingsSlice'
 import { FileMeta, loadFiles, addFile, updateFile, removeFile } from './features/files/filesSlice'
 import { FolderMeta, loadFolders, addFolder, updateFolder, removeFolder } from './features/folders/foldersSlice'
+import { getParentPath } from './utils'
 
 export default class TwoPaneBrowserPlugin extends Plugin {
 	constructor(app: App, manifest: PluginManifest) {
@@ -82,11 +83,12 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		store.dispatch(loadSettings(settings))
 	}
 
-	async fileMetaFromTFile(file: TFile, fileCache: CachedMetadata|null=null): Promise<FileMeta> {
-		// TODO: delay this work until we're actually looking at it
+	// FUTURE: delay this work until we're actually looking at it
+	// Really, only want previews for files in viewport (but tags are important always for filtering)
+	async inflatedFileMetaFromTFile(file: TFile, fileCache: CachedMetadata|null=null): Promise<FileMeta> {
 		const contents = await app.vault.cachedRead(file)
+		// FUTURE: leverage cache.sections to do Headers in previews
 		const createFilePreview = (numLines=2) => {
-			// FUTURE: leverage cache.sections to do Headers in previews
 			let preview = ''
 			const lines = contents.split('\n')
 			let lineCount = 0
@@ -118,11 +120,19 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 			return [...allTags]
 		}
 		return {
+			...this.fileMetaFromTFile(file),
+			preview: createFilePreview(),
+			tags: getTags(),
+		}
+	}
+
+	fileMetaFromTFile(file: TFile): FileMeta {
+		return {
 			name: file.name,
 			path: file.path,
 			stat: file.stat,
-			preview: createFilePreview(),
-			tags: getTags(),
+			preview: '',
+			tags: [],
 		}
 	}
 
@@ -135,16 +145,11 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		}
 	}
 
-	async syncVaultFiles() {
+	fetchFolders() {
 		const root = this.app.vault.getRoot()
 		const folders: FolderMeta[] = []
-		const files: FileMeta[] = []
-		Vault.recurseChildren(root, async f => {
-			if (f instanceof TFile) {
-				const file = await this.fileMetaFromTFile(f)
-				files.push(file)
-			}
-			else if (f instanceof TFolder) {
+		Vault.recurseChildren(root, f => {
+			if (f instanceof TFolder) {
 				const folder = this.folderMetaFromTFolder(f)
 				folders.push(folder)
 			}
@@ -152,14 +157,28 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		if (folders.length) {
 			store.dispatch(loadFolders(folders))
 		}
+	}
+
+	async fetchFiles(pathsInScope: Set<string>=new Set()) {
+		const root = this.app.vault.getRoot()
+		const files: FileMeta[] = []
+		Vault.recurseChildren(root, async f => {
+			if (f instanceof TFile) {
+				if (pathsInScope.size === 0 || pathsInScope.has(getParentPath(f))) {
+					const file = await this.inflatedFileMetaFromTFile(f)
+					files.push(file)
+				}
+			}
+		})
 		if (files.length) {
+			// FUTURE: decide whether to load or upsert here... we only ever care about files in scope right?
 			store.dispatch(loadFiles(files))
 		}
 	}
 
 	async createFileOrFolder(f: TAbstractFile) {
 		if (f instanceof TFile) {
-			const file = await this.fileMetaFromTFile(f)
+			const file = await this.inflatedFileMetaFromTFile(f)
 			store.dispatch(addFile(file))
 		}
 		else if (f instanceof TFolder) {
@@ -168,7 +187,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		}
 	}
 
-	async deleteFileOrFolder(f: TAbstractFile) {
+	deleteFileOrFolder(f: TAbstractFile) {
 		if (f instanceof TFile) {
 			store.dispatch(removeFile(f.path))
 		}
@@ -177,9 +196,9 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		}
 	}
 
-	async renameFileOrFolder(f: TAbstractFile) {
+	renameFileOrFolder(f: TAbstractFile) {
 		if (f instanceof TFile) {
-			const file = await this.fileMetaFromTFile(f)
+			const file = this.fileMetaFromTFile(f)
 			store.dispatch(updateFile({ id: file.path, changes: file }))
 		}
 		else if (f instanceof TFolder) {
@@ -189,7 +208,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 	}
 
 	async metadataCacheChanged(f: TFile, data: string, cache: CachedMetadata) {
-		const file = await this.fileMetaFromTFile(f, cache)
+		const file = await this.inflatedFileMetaFromTFile(f, cache)
 		store.dispatch(updateFile({id: file.path, changes: file }))
 	}
 }

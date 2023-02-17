@@ -131,7 +131,7 @@ export const selectPathsInScope = createSelector(
         }
       }
     }
-    return [...pathsInScope]
+    return pathsInScope
   }
 )
 

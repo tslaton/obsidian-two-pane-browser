@@ -40,11 +40,7 @@ export const filesSelectors = filesAdapter.getSelectors<RootState>(
 export const selectFilesInScope = createSelector(
   filesSelectors.selectAll,
   selectPathsInScope,
-  (files, pathsInScope) => {
-    const pathsInScopeSet = new Set(pathsInScope)
-    const filteredFiles = files.filter(file => pathsInScopeSet.has(getParentPath(file)))
-    return filteredFiles
-  } 
+  (files, pathsInScope) => files.filter(file => pathsInScope.has(getParentPath(file)))
 )
 
 export default filesSlice.reducer
