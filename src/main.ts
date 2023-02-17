@@ -86,6 +86,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		// TODO: delay this work until we're actually looking at it
 		const contents = await app.vault.cachedRead(file)
 		const createFilePreview = (numLines=2) => {
+			// FUTURE: leverage cache.sections to do Headers in previews
 			let preview = ''
 			const lines = contents.split('\n')
 			let lineCount = 0
@@ -157,7 +158,6 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 	}
 
 	async createFileOrFolder(f: TAbstractFile) {
-		console.log('createFileOrFolder: ', f)
 		if (f instanceof TFile) {
 			const file = await this.fileMetaFromTFile(f)
 			store.dispatch(addFile(file))
@@ -169,7 +169,6 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 	}
 
 	async deleteFileOrFolder(f: TAbstractFile) {
-		console.log('deleteFileOrFolder: ', f)
 		if (f instanceof TFile) {
 			store.dispatch(removeFile(f.path))
 		}
@@ -179,7 +178,6 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 	}
 
 	async renameFileOrFolder(f: TAbstractFile) {
-		console.log('renameFileOrFolder: ', f)
 		if (f instanceof TFile) {
 			const file = await this.fileMetaFromTFile(f)
 			store.dispatch(updateFile({ id: file.path, changes: file }))
@@ -191,8 +189,6 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 	}
 
 	async metadataCacheChanged(f: TFile, data: string, cache: CachedMetadata) {
-		// TODO: leverage cache.sections to do Headers in previews
-		console.log('metadataCacheChanged: ', f, data, cache)
 		const file = await this.fileMetaFromTFile(f, cache)
 		store.dispatch(updateFile({id: file.path, changes: file }))
 	}

@@ -4,7 +4,10 @@ import styled from '@emotion/styled'
 import { FolderIcon, FolderOpenIcon } from 'lucide-react'
 // Modules
 import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
-import { FolderMeta, makeSelectChildFoldersByParentPath, toggleFolderExpansion, toggleFolderSelection } from './foldersSlice'
+import { 
+  FolderMeta, makeSelectChildFoldersByParentPath, 
+  toggleFolderExpansion, toggleFolderSelection, selectFolder, 
+} from './foldersSlice'
 
 interface FolderProps {
   folder: FolderMeta
@@ -19,18 +22,24 @@ export default function Folder(props: FolderProps) {
 
   const Icon = folder.isExpanded ? FolderOpenIcon : FolderIcon
 
-  function toggleIsExpanded() {
+  function toggleIsExpanded(event: React.MouseEvent) {
+    event.stopPropagation()
     dispatch(toggleFolderExpansion(folder.path))
   }
 
-  function toggleIsSelected() {
-    dispatch(toggleFolderSelection(folder.path))
+  function toggleIsSelected(event: React.MouseEvent) {
+    if (event.metaKey) {
+      dispatch(toggleFolderSelection(folder.path))
+    }
+    else {
+      dispatch(selectFolder(folder.path))
+    }
   }
 
   return (
     <StyledFolder {...props}>
-      <div className="flex-folder-wrapper" onClick={() => toggleIsSelected()}>
-        <div className="clickable-icon" onClick={() => toggleIsExpanded()}>
+      <div className="flex-folder-wrapper" onClick={(event) => toggleIsSelected(event)}>
+        <div className="clickable-icon" onClick={(event) => toggleIsExpanded(event)}>
           <Icon size={18} />
         </div>
         <div className="folder-name">

@@ -2,7 +2,7 @@
 import { createSelector, createSlice, createEntityAdapter, PayloadAction } from '@reduxjs/toolkit'
 // Modules
 import type { RootState } from '../../plugin/store'
-import { getParentPath } from '../../utils'
+import { getParentPath, getDescendantPaths, getChildPaths } from '../../utils'
 
 export interface FolderMeta {
   name: string
@@ -31,14 +31,36 @@ export const foldersSlice = createSlice({
       const folder = state.entities[path]
       if (folder) {
         folder.isExpanded = !folder.isExpanded
+        // Deselect all descendants
+        // const allFolderPaths = state.ids as string[]
+        // const descendantPaths = getDescendantPaths(folder.path, allFolderPaths)
+        // for (let descendantPath of descendantPaths) {
+        //   const descendantFolder = state.entities[descendantPath]
+        //   if (descendantFolder) {
+        //     descendantFolder.isSelected = false
+        //   }
+        // }
       }
-      // TODO: if closing a folder, deselect all descendants
     },
     toggleFolderSelection(state, action: PayloadAction<string>) {
       const path = action.payload
       const folder = state.entities[path]
       if (folder) {
         folder.isSelected = !folder.isSelected
+        // Deselect parent - probably not desirable
+        // const parentFolder = state.entities[getParentPath(folder)]
+        // if (parentFolder) {
+        //   parentFolder.isSelected = false
+        // }
+        // Deselect all descendants
+        // const allFolderPaths = state.ids as string[]
+        // const descendantPaths = getDescendantPaths(folder.path, allFolderPaths)
+        // for (let descendantPath of descendantPaths) {
+        //   const descendantFolder = state.entities[descendantPath]
+        //   if (descendantFolder) {
+        //     descendantFolder.isSelected = false
+        //   }
+        // }
       }
     },
     selectFolder(state, action: PayloadAction<string>) {
@@ -46,12 +68,7 @@ export const foldersSlice = createSlice({
       for (let id of state.ids) {
         const folder = state.entities[id]
         if (folder) {
-          if (id === path) {
-            folder.isSelected = true
-          }
-          else {
-            folder.isSelected = false
-          }
+          folder.isSelected = (id === path)
         }
       }
     }
@@ -72,7 +89,7 @@ export const selectTopLevelFolders = createSelector(
   folders => folders.filter(folder => folder.path === folder.name)
 )
 
-// TODO: evaluate performance; consider proxy-memoize 
+// FUTURE: evaluate performance; consider proxy-memoize 
 // Ref: https://redux.js.org/usage/deriving-data-selectors#selector-factories
 export const makeSelectChildFoldersByParentPath = () => {
   const selectChildFoldersByParentPath = createSelector(
@@ -80,34 +97,41 @@ export const makeSelectChildFoldersByParentPath = () => {
       foldersSelectors.selectAll,
       (state: RootState, parentPath: string) => parentPath,
     ],
-    (folders, parentPath) => folders.filter(folder => getParentPath(folder.name, folder.path) === parentPath)
+    (folders, parentPath) => folders.filter(folder => getParentPath(folder) === parentPath)
   )
   return selectChildFoldersByParentPath
 }
 
-export const selectFoldersInScope = createSelector(
+export const selectSelectedFolders = createSelector(
   foldersSelectors.selectAll,
-  folders => {
-    const selectedFolders = folders.filter(folder => folder.isSelected)
-    // If a child of folder has been selected, eliminate its parent scope
-    // TODO: better to do with programmatic select/deselect
-    // const scopesToEliminate = new Set<string>()
-    // for (let folder of selectedFolders) {
-    //   scopesToEliminate.add(getParentPath(folder.name, folder.path))
-    // }
-    // return selectedFolders.filter(folder => !scopesToEliminate.has(folder.path))
-    
-    // Consider the descendants of a folder selected
-    const foldersInScope = new Set<FolderMeta>()
-    const selectedPaths = new Set(selectedFolders.map(folder => folder.path))
-    for (let folder of folders) {
-      for (let selectedPath of selectedPaths) {
-        if (folder.path.startsWith(selectedPath)) {
-          foldersInScope.add(folder)
+  folders => folders.filter(folder => folder.isSelected)
+)
+
+export const selectPathsInScope = createSelector(
+  foldersSelectors.selectAll,
+  selectSelectedFolders,
+  (folders, selectedFolders) => {
+    const allPaths = folders.map(folder => folder.path)
+    const pathsInScope = new Set<string>()
+    // Consider the descendants of a selected folder in scope if none of its children are selected
+    for (let selectedFolder of selectedFolders) {
+      pathsInScope.add(selectedFolder.path)
+      const descendantPaths = getDescendantPaths(selectedFolder.path, allPaths)
+      const childPaths = new Set(getChildPaths(selectedFolder.path, descendantPaths))
+      let hasSelectedChildren = false
+      for (let otherSelectedFolder of selectedFolders) {
+        if (childPaths.has(otherSelectedFolder.path)) {
+          hasSelectedChildren = true
+          break
+        }
+      }
+      if (!hasSelectedChildren) {
+        for (let descendantPath of descendantPaths) {
+          pathsInScope.add(descendantPath)
         }
       }
     }
-    return [...foldersInScope]
+    return [...pathsInScope]
   }
 )
 

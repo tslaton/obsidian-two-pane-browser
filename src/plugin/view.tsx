@@ -49,7 +49,7 @@ export default class TwoPaneBrowserView extends ItemView {
   }
 
   async onClose() {
-    // TODO: restore the sidebar's width
+    // FUTURE: restore the sidebar's width
     this.root?.unmount()
   }
 }

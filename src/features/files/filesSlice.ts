@@ -3,7 +3,7 @@ import { FileStats } from 'obsidian'
 import { createSelector, createSlice, createEntityAdapter, PayloadAction } from '@reduxjs/toolkit'
 // Modules
 import type { RootState } from '../../plugin/store'
-import { selectFoldersInScope } from '../folders/foldersSlice'
+import { selectPathsInScope } from '../folders/foldersSlice'
 import { getParentPath } from '../../utils'
 
 export interface FileMeta {
@@ -39,13 +39,10 @@ export const filesSelectors = filesAdapter.getSelectors<RootState>(
 )
 export const selectFilesInScope = createSelector(
   filesSelectors.selectAll,
-  selectFoldersInScope,
-  (files, foldersInScope) => {
-    console.log('selectFilesInScope called: ', files, foldersInScope)
-    // TODO: actually this isn't fully correct logic - eg., notes selection doesn't grab notes/ai
-    // TODO: cut out the middle man here?
-    const pathsInScope = new Set(foldersInScope.map(folder => folder.path))
-    const filteredFiles = files.filter(file => pathsInScope.has(getParentPath(file.name, file.path)))
+  selectPathsInScope,
+  (files, pathsInScope) => {
+    const pathsInScopeSet = new Set(pathsInScope)
+    const filteredFiles = files.filter(file => pathsInScopeSet.has(getParentPath(file)))
     return filteredFiles
   } 
 )

@@ -5,7 +5,7 @@ import { css } from '@emotion/react'
 import { useAppSelector } from '../../plugin/hooks'
 import { selectStylesByTag } from '../settings/settingsSlice'
 
-// TODO: think about how these work with editor extensions:
+// FUTURE: think about how these work with editor extensions:
 // https://marcus.se.net/obsidian-plugin-docs/editor/extensions
 // https://marcus.se.net/obsidian-plugin-docs/editor/extensions/decorations
 // Looks like I could do styling in JS or CSS
