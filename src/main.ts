@@ -1,12 +1,14 @@
 // Libraries
-import { App, Plugin, PluginSettingTab, Setting } from 'obsidian'
+import { Plugin, Vault, TAbstractFile, TFile, TFolder, getAllTags } from 'obsidian'
 // Modules
-import TwoPaneBrowserView, { TWO_PANE_BROWSER_VIEW } from './view'
-import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, tagColors } from './settings'
+import store from './plugin/store'
+import TwoPaneBrowserView, { TWO_PANE_BROWSER_VIEW } from './plugin/view'
+import TwoPaneBrowserSettingTab from './features/settings/TwoPaneBrowserSettingTab'
+import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, loadSettings } from './features/settings/settingsSlice'
+import { FileMeta, createFilePreview, loadFiles, addFile } from './features/files/filesSlice'
+import { FolderMeta, loadFolders, addFolder } from './features/folders/foldersSlice'
 
 export default class TwoPaneBrowserPlugin extends Plugin {
-	settings: TwoPaneBrowserSettings
-
 	async activateView() {
 		this.app.workspace.detachLeavesOfType(TWO_PANE_BROWSER_VIEW)
 
@@ -25,7 +27,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 
 		this.registerView(
 			TWO_PANE_BROWSER_VIEW,
-			leaf => new TwoPaneBrowserView(leaf, this.settings)
+			leaf => new TwoPaneBrowserView(leaf)
 		)
 
 		this.addRibbonIcon(
@@ -36,78 +38,120 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 			}
 		)
 
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-two-pane-browser',
-			name: 'Open Two Pane Browser',
-			hotkeys: [{ modifiers: ["Mod", "Shift"], key: "m" }],
-			callback: () => {
-				// TODO
-				console.log('called open-two-pane-browser')
-			}
-		})
-
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new TwoPaneBrowserSettingTab(this.app, this))
 
+		// TODO: determine why these are empty and if there's a better time to do this
+		const { folders, files } = await this.parseFilesAndFolders(this.app.vault.getRoot())
+		if (folders.length) {
+			store.dispatch(loadFolders(folders))
+		}
+		if (files.length) {
+			store.dispatch(loadFiles(files))
+		}
+
+		// Register handlers for vault updates
+		this.app.vault.on('create', this.createFileOrFolder.bind(this))
+		this.app.vault.on('delete', this.deleteFileOrFolder.bind(this))
+		this.app.vault.on('rename', this.renameFileOrFolder.bind(this))
+		this.app.vault.on('modify', this.modifyFileOrFolder.bind(this))
+
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		// TODO: refresh the tag and file lists periodically? Or on change?
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000))
+		this.registerInterval(window.setInterval(() => console.log(store.getState()), 30 * 1000))
 	}
 
 	onunload() {
 		this.app.workspace.detachLeavesOfType(TWO_PANE_BROWSER_VIEW)
+		this.app.vault.off('create', this.createFileOrFolder.bind(this))
+		this.app.vault.off('delete', this.deleteFileOrFolder.bind(this))
+		this.app.vault.off('rename', this.renameFileOrFolder.bind(this))
+		this.app.vault.off('modify', this.modifyFileOrFolder.bind(this))
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData())
+		const settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData())
+		store.dispatch(loadSettings(settings))
 	}
 
-	async saveSettings() {
-		await this.saveData(this.settings)
-	}
-}
-
-class TwoPaneBrowserSettingTab extends PluginSettingTab {
-	plugin: TwoPaneBrowserPlugin
-
-	constructor(app: App, plugin: TwoPaneBrowserPlugin) {
-		super(app, plugin)
-		this.plugin = plugin
+	async saveSettings(settings: TwoPaneBrowserSettings) {
+		await this.saveData(settings)
+		store.dispatch(loadSettings(settings))
 	}
 
-	display(): void {
-		const { containerEl } = this
-		containerEl.empty()
-		containerEl.createEl('h2', { text: 'Settings for Two-Pane Browser '})
-		containerEl.createEl('h3', { text: 'Tag colors' })
-
-		for (let colorName of Object.keys(tagColors)) {
-			const setting = new Setting(containerEl)
-				.setName(colorName)
-				.setDesc('Tags listed here receive this style. Separate them by spaces.')
-				.addTextArea(textArea => {
-					textArea
-						.setPlaceholder('Enter tags, including #')
-						.setValue(this.plugin.settings.tagsByColorName[colorName])
-						.onChange(async (value) => {
-							this.plugin.settings.tagsByColorName[colorName] = value
-							await this.plugin.saveSettings()
-						})
-					textArea.inputEl.cols = 60
-					textArea.inputEl.rows = 8
-				})
-			// Style the setting like the tag
-			const nameEl = setting.nameEl
-			// @ts-ignore
-			const { pill, text } = tagColors[colorName]
-			let style = `
-				color: ${text}; 
-				background-color: ${pill};
-				padding: 0px 8px 2px 8px;
-				border-radius: 10px;
-			`
-			nameEl.innerHTML = `<span style="${style}">${nameEl.innerHTML}</span>`
+	async fileMetaFromTFile(file: TFile): Promise<FileMeta> {
+		// TODO: delay this work until we're actually looking at it
+		const contents = await app.vault.cachedRead(file)
+		const preview = createFilePreview(contents)
+		const tags = this.getTags(file)
+		return {
+			name: file.name,
+			path: file.path,
+			stat: file.stat,
+			preview,
+			tags
 		}
+	}
+
+	folderMetaFromTFolder(folder: TFolder): FolderMeta {
+		return {
+			name: folder.name,
+			path: folder.path,
+			isExpanded: false,
+			isSelected: false,
+		}
+	}
+
+	// https://stackoverflow.com/a/71896674
+	getTags(file: TFile) {
+		const allTags = new Set<string>()
+		const fileCache = this.app.metadataCache.getFileCache(file)
+		console.log('getTags: ', fileCache)
+		if (fileCache) {
+			const tags = getAllTags(fileCache) || []
+			for (let tag of tags) {
+				allTags.add(tag)
+			}
+		}
+		return [...allTags]
+	}
+
+	async parseFilesAndFolders(root: TFolder) {
+		const folders: FolderMeta[] = []
+		const files: FileMeta[] = []
+		Vault.recurseChildren(root, async f => {
+			if (f instanceof TFile) {
+				const file = await this.fileMetaFromTFile(f)
+				files.push(file)
+			}
+			else if (f instanceof TFolder) {
+				const folder = this.folderMetaFromTFolder(f)
+				folders.push(folder)
+			}
+		})
+		return { folders, files }
+	}
+
+	// TODO: finish these
+	async createFileOrFolder(f: TAbstractFile) {
+		if (f instanceof TFile) {
+			const file = await this.fileMetaFromTFile(f)
+			store.dispatch(addFile(file))
+		}
+		else if (f instanceof TFolder) {
+			const folder = this.folderMetaFromTFolder(f)
+			store.dispatch(addFolder(folder))
+		}
+	}
+
+	deleteFileOrFolder(f: TAbstractFile) {
+		// console.log('deleteFileOrFolder: ', f)
+	}
+
+	renameFileOrFolder(f: TAbstractFile) {
+		// console.log('renameFileOrFolder: ', f)
+	}
+
+	modifyFileOrFolder(f: TAbstractFile) {
+		// console.log('modifyFileOrFolder: ', f)
 	}
 }
