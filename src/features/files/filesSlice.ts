@@ -4,13 +4,14 @@ import { createSelector, createSlice, createEntityAdapter, PayloadAction } from 
 // Modules
 import type { RootState } from '../../plugin/store'
 import { selectFoldersInScope } from '../folders/foldersSlice'
+import { getParentPath } from '../../utils'
 
 export interface FileMeta {
   name: string
   path: string
+  stat: FileStats
   preview: string
   tags: string[]
-  stats: FileStats
 }
 
 export function createFilePreview(fileContents: string, numLines=2) {
@@ -40,10 +41,10 @@ export const filesSlice = createSlice({
   name: 'files',
   initialState: filesAdapter.getInitialState(),
   reducers: {
-    filesReceived(state, action: PayloadAction<FileMeta[]>) {
+    loadFiles(state, action: PayloadAction<FileMeta[]>) {
       filesAdapter.setAll(state, action.payload)
     },
-    fileAdded: filesAdapter.addOne,
+    addFile: filesAdapter.addOne,
     // TODO: possibly combine all of these into modifyFile
     updateFilePreview(state, action: PayloadAction<{ path: string, preview: string }>) {
       const { path, preview } = action.payload
@@ -52,11 +53,11 @@ export const filesSlice = createSlice({
         file.preview = preview
       }
     },
-    updateFileStats(state, action: PayloadAction<{ path: string, stats: FileStats }>) {
-      const { path, stats } = action.payload
+    updateFileStats(state, action: PayloadAction<{ path: string, stat: FileStats }>) {
+      const { path, stat } = action.payload
       const file = state.entities[path]
       if (file) {
-        file.stats = stats
+        file.stat = stat
       }
     },
     updateFileTags(state, action: PayloadAction<{ path: string, tags: string[] }>) {
@@ -69,8 +70,7 @@ export const filesSlice = createSlice({
   },
 })
 
-export const { filesReceived, fileAdded, updateFilePreview, updateFileTags } = filesSlice.actions
-
+export const { loadFiles, addFile, updateFilePreview, updateFileTags } = filesSlice.actions
 
 export const filesSelectors = filesAdapter.getSelectors<RootState>(
   state => state.files
@@ -79,9 +79,12 @@ export const selectFilesInScope = createSelector(
   filesSelectors.selectAll,
   selectFoldersInScope,
   (files, foldersInScope) => {
+    // TODO: actually this isn't fully correct logic - eg., notes selection doesn't grab notes/ai
+    // might be better to do with forced selection/deselect anyway
     // TODO: cut out the middle man here?
     const pathsInScope = new Set(foldersInScope.map(folder => folder.path))
-    return files.filter(file => pathsInScope.has(file.path))
+    const filteredFiles = files.filter(file => pathsInScope.has(getParentPath(file.name, file.path)))
+    return filteredFiles
   } 
 )
 

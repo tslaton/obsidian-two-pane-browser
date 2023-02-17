@@ -1,19 +1,12 @@
 // Libraries
-import { Plugin, TAbstractFile, TFile, TFolder } from 'obsidian'
+import { Plugin, Vault, TAbstractFile, TFile, TFolder, getAllTags } from 'obsidian'
 // Modules
 import store from './plugin/store'
 import TwoPaneBrowserView, { TWO_PANE_BROWSER_VIEW } from './plugin/view'
 import TwoPaneBrowserSettingTab from './features/settings/TwoPaneBrowserSettingTab'
 import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, loadSettings } from './features/settings/settingsSlice'
-import { fileAdded } from './features/files/filesSlice'
-
-export interface FileMeta {
-  name: string
-  path: string
-  preview: string
-  tags: string[]
-  stats: FileStats
-}
+import { FileMeta, createFilePreview, loadFiles, addFile } from './features/files/filesSlice'
+import { FolderMeta, loadFolders, addFolder } from './features/folders/foldersSlice'
 
 export default class TwoPaneBrowserPlugin extends Plugin {
 	async activateView() {
@@ -48,24 +41,31 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new TwoPaneBrowserSettingTab(this.app, this))
 
-		store.dispatch(loadFolderTree(this.app.vault.getRoot()))
+		// TODO: determine why these are empty and if there's a better time to do this
+		const { folders, files } = await this.parseFilesAndFolders(this.app.vault.getRoot())
+		if (folders.length) {
+			store.dispatch(loadFolders(folders))
+		}
+		if (files.length) {
+			store.dispatch(loadFiles(files))
+		}
+
 		// Register handlers for vault updates
-		this.app.vault.on('create', this.createFileOrFolder)
-		this.app.vault.on('delete', this.deleteFileOrFolder)
-		this.app.vault.on('rename', this.renameFileOrFolder)
-		this.app.vault.on('modify', this.modifyFileOrFolder)
+		this.app.vault.on('create', this.createFileOrFolder.bind(this))
+		this.app.vault.on('delete', this.deleteFileOrFolder.bind(this))
+		this.app.vault.on('rename', this.renameFileOrFolder.bind(this))
+		this.app.vault.on('modify', this.modifyFileOrFolder.bind(this))
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		// TODO: refresh the tag and file lists periodically as a failsafe?
-		// this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000))
+		this.registerInterval(window.setInterval(() => console.log(store.getState()), 30 * 1000))
 	}
 
 	onunload() {
 		this.app.workspace.detachLeavesOfType(TWO_PANE_BROWSER_VIEW)
-		this.app.vault.off('create', this.createFileOrFolder)
-		this.app.vault.off('delete', this.deleteFileOrFolder)
-		this.app.vault.off('rename', this.renameFileOrFolder)
-		this.app.vault.off('modify', this.modifyFileOrFolder)
+		this.app.vault.off('create', this.createFileOrFolder.bind(this))
+		this.app.vault.off('delete', this.deleteFileOrFolder.bind(this))
+		this.app.vault.off('rename', this.renameFileOrFolder.bind(this))
+		this.app.vault.off('modify', this.modifyFileOrFolder.bind(this))
 	}
 
 	async loadSettings() {
@@ -78,63 +78,80 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		store.dispatch(loadSettings(settings))
 	}
 
-	createFileOrFolder(f: TAbstractFile) {
-		if (f instanceof TFolder) {
-
+	async fileMetaFromTFile(file: TFile): Promise<FileMeta> {
+		// TODO: delay this work until we're actually looking at it
+		const contents = await app.vault.cachedRead(file)
+		const preview = createFilePreview(contents)
+		const tags = this.getTags(file)
+		return {
+			name: file.name,
+			path: file.path,
+			stat: file.stat,
+			preview,
+			tags
 		}
-		else if (f instanceof TFile && f.extension === 'md') {
-			store.dispatch(fileAdded({
-				name: f.name,
-				path: f.path,
-				stats: f.stat,
-				preview: '',
-				tags: [],
-			}))
+	}
+
+	folderMetaFromTFolder(folder: TFolder): FolderMeta {
+		return {
+			name: folder.name,
+			path: folder.path,
+			isExpanded: false,
+			isSelected: false,
+		}
+	}
+
+	// https://stackoverflow.com/a/71896674
+	getTags(file: TFile) {
+		const allTags = new Set<string>()
+		const fileCache = this.app.metadataCache.getFileCache(file)
+		console.log('getTags: ', fileCache)
+		if (fileCache) {
+			const tags = getAllTags(fileCache) || []
+			for (let tag of tags) {
+				allTags.add(tag)
+			}
+		}
+		return [...allTags]
+	}
+
+	async parseFilesAndFolders(root: TFolder) {
+		const folders: FolderMeta[] = []
+		const files: FileMeta[] = []
+		Vault.recurseChildren(root, async f => {
+			if (f instanceof TFile) {
+				const file = await this.fileMetaFromTFile(f)
+				files.push(file)
+			}
+			else if (f instanceof TFolder) {
+				const folder = this.folderMetaFromTFolder(f)
+				folders.push(folder)
+			}
+		})
+		return { folders, files }
+	}
+
+	// TODO: finish these
+	async createFileOrFolder(f: TAbstractFile) {
+		if (f instanceof TFile) {
+			const file = await this.fileMetaFromTFile(f)
+			store.dispatch(addFile(file))
+		}
+		else if (f instanceof TFolder) {
+			const folder = this.folderMetaFromTFolder(f)
+			store.dispatch(addFolder(folder))
 		}
 	}
 
 	deleteFileOrFolder(f: TAbstractFile) {
-		if (f instanceof TFolder) {
-
-		}
-		else if (f instanceof TFile && f.extension === 'md') {
-
-		}
+		// console.log('deleteFileOrFolder: ', f)
 	}
 
 	renameFileOrFolder(f: TAbstractFile) {
-		if (f instanceof TFolder) {
-
-		}
-		else if (f instanceof TFile && f.extension === 'md') {
-
-		}
+		// console.log('renameFileOrFolder: ', f)
 	}
 
 	modifyFileOrFolder(f: TAbstractFile) {
-
+		// console.log('modifyFileOrFolder: ', f)
 	}
 }
-
-React.useEffect(() => {
-	// TODO: previews will depend on selected tags, search query, etc. too
-	const fetchFileMetadata = async() => {
-		const filePreviewsByPath: Record<string, string> = {}
-		const tagsByPath: Record<string, string[]> = {} 
-		for (let file of filesInScope) {
-			const readableFile = app.vault.getAbstractFileByPath(file.path) as TFile
-			tagsByPath[file.path] = getTags(readableFile, app.metadataCache)
-			const contents = await app.vault.cachedRead(readableFile)
-			filePreviewsByPath[file.path] = createFilePreview(contents)
-		}
-		dispatch(loadFilePreviewsByPath(filePreviewsByPath))
-		dispatch(loadTagsByPath(tagsByPath))
-	}
-	fetchFileMetadata()
-	const debouncedFetchFileMetadata = debounce(fetchFileMetadata, 1000, true) 
-	// Watch for changes to the file(s)
-	app.vault.on('modify', debouncedFetchFileMetadata)
-	return () => {
-		app.vault.off('modify', debouncedFetchFileMetadata)
-	}
-}, [filesInScope])

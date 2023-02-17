@@ -3,17 +3,23 @@ import { App, PluginSettingTab, Setting, debounce } from 'obsidian'
 // Modules
 import type TwoPaneBrowserPlugin from '../../main'
 import store from '../../plugin/store'
-import { TwoPaneBrowserSettings, selectSettings } from './settingsSlice'
+import { TwoPaneBrowserSettings } from './settingsSlice'
 import { tagStyles, createTagStyle } from '../../features/tags/Tag'
+import { deepcopy } from '../../utils'
 
 export default class TwoPaneBrowserSettingTab extends PluginSettingTab {
 	plugin: TwoPaneBrowserPlugin
 	draftSettings: TwoPaneBrowserSettings
+	debouncedSaveSettings
 
 	constructor(app: App, plugin: TwoPaneBrowserPlugin) {
 		super(app, plugin)
 		this.plugin = plugin
-		this.draftSettings = selectSettings(store.getState())
+		this.draftSettings = deepcopy(store.getState()).settings
+		this.debouncedSaveSettings = debounce(
+			async () => { await this.plugin.saveSettings(deepcopy(this.draftSettings)) }, 1000, true
+		)
+
 	}
 
 	display(): void {
@@ -32,7 +38,7 @@ export default class TwoPaneBrowserSettingTab extends PluginSettingTab {
 						.setValue(this.draftSettings.tagsByStyleName[styleName])
 						.onChange(async (value) => {
 							this.draftSettings.tagsByStyleName[styleName] = value
-							debounce(async () => { await this.plugin.saveSettings(this.draftSettings) }, 1000, true)
+							this.debouncedSaveSettings()							
 						})
 					textArea.inputEl.cols = 60
 					textArea.inputEl.rows = 8

@@ -12,7 +12,7 @@ interface FilePreviewProps {
 
 export default function FilePreview(props: FilePreviewProps) {
   const { file } = props
-  const { name, stats, preview, tags } = file
+  const { name, stat, preview, tags } = file
 
   return (
     <StyledFilePreview>
@@ -24,7 +24,7 @@ export default function FilePreview(props: FilePreviewProps) {
       </div>
       <div className="flex-file-info-wrapper">
         <div className="last-modified">
-          {moment(stats.mtime).fromNow()}
+          {moment(stat.mtime).fromNow()}
         </div>
         {tags.map(tag => 
           <Tag key={tag} tag={tag} />
