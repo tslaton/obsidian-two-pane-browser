@@ -1,11 +1,19 @@
 // Libraries
-import { Plugin } from 'obsidian'
+import { Plugin, TAbstractFile, TFile, TFolder } from 'obsidian'
 // Modules
 import store from './plugin/store'
 import TwoPaneBrowserView, { TWO_PANE_BROWSER_VIEW } from './plugin/view'
-import { TwoPaneBrowserSettingTab } from './features/settings/settingsTab'
+import TwoPaneBrowserSettingTab from './features/settings/TwoPaneBrowserSettingTab'
 import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, loadSettings } from './features/settings/settingsSlice'
-import { loadFolderTree } from './slices/folderTreeSlice'
+import { fileAdded } from './features/files/filesSlice'
+
+export interface FileMeta {
+  name: string
+  path: string
+  preview: string
+  tags: string[]
+  stats: FileStats
+}
 
 export default class TwoPaneBrowserPlugin extends Plugin {
 	async activateView() {
@@ -71,18 +79,62 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 	}
 
 	createFileOrFolder(f: TAbstractFile) {
+		if (f instanceof TFolder) {
 
+		}
+		else if (f instanceof TFile && f.extension === 'md') {
+			store.dispatch(fileAdded({
+				name: f.name,
+				path: f.path,
+				stats: f.stat,
+				preview: '',
+				tags: [],
+			}))
+		}
 	}
 
 	deleteFileOrFolder(f: TAbstractFile) {
+		if (f instanceof TFolder) {
 
+		}
+		else if (f instanceof TFile && f.extension === 'md') {
+
+		}
 	}
 
 	renameFileOrFolder(f: TAbstractFile) {
+		if (f instanceof TFolder) {
 
+		}
+		else if (f instanceof TFile && f.extension === 'md') {
+
+		}
 	}
 
 	modifyFileOrFolder(f: TAbstractFile) {
 
 	}
 }
+
+React.useEffect(() => {
+	// TODO: previews will depend on selected tags, search query, etc. too
+	const fetchFileMetadata = async() => {
+		const filePreviewsByPath: Record<string, string> = {}
+		const tagsByPath: Record<string, string[]> = {} 
+		for (let file of filesInScope) {
+			const readableFile = app.vault.getAbstractFileByPath(file.path) as TFile
+			tagsByPath[file.path] = getTags(readableFile, app.metadataCache)
+			const contents = await app.vault.cachedRead(readableFile)
+			filePreviewsByPath[file.path] = createFilePreview(contents)
+		}
+		dispatch(loadFilePreviewsByPath(filePreviewsByPath))
+		dispatch(loadTagsByPath(tagsByPath))
+	}
+	fetchFileMetadata()
+	const debouncedFetchFileMetadata = debounce(fetchFileMetadata, 1000, true) 
+	// Watch for changes to the file(s)
+	app.vault.on('modify', debouncedFetchFileMetadata)
+	return () => {
+		app.vault.off('modify', debouncedFetchFileMetadata)
+	}
+}, [filesInScope])

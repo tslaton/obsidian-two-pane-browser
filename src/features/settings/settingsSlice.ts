@@ -2,7 +2,7 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit'
 // Modules
 import type { RootState } from '../../plugin/store'
-import { TagStyle, tagStyles } from '../../common/styles'
+import { TagStyle, tagStyles } from '../../features/tags/Tag'
 
 export const DEFAULT_SETTINGS = {
   tagsByStyleName: Object.fromEntries(
@@ -38,6 +38,7 @@ export const selectStylesByTag = createSelector(
         stylesByTag[tag] = tagStyles[styleName] || tagStyles.gray
       }
     }
+    return stylesByTag
   }
 )
 

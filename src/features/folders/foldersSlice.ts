@@ -1,24 +1,14 @@
 // Libraries
-import { TAbstractFile, TFolder, TFile } from 'obsidian'
 import { createSelector, createSlice, createEntityAdapter, PayloadAction } from '@reduxjs/toolkit'
 // Modules
 import type { RootState } from '../../plugin/store'
-import type { FileMeta, fileMetaFromTFile } from '../files/filesSlice'
+import { getParentPath } from '../../utils'
 
 export interface FolderMeta {
   name: string
   path: string
   isExpanded: boolean
   isSelected: boolean
-}
-
-export function folderMetaFromTFolder(folder: TFolder): FolderMeta {
-  const files = folder.children.filter(child => child instanceof TFile) as TFile[]
-  const folders = folder.children.filter(child => child instanceof TFolder) as TFolder[]
-  return {
-    name: folder.name,
-    path: folder.path,
-  }
 }
 
 const foldersAdapter = createEntityAdapter<FolderMeta>({
@@ -30,17 +20,76 @@ export const foldersSlice = createSlice({
   name: 'folders',
   initialState: foldersAdapter.getInitialState(),
   reducers: {
-    foldersReceived(state, action) {
-      foldersAdapter.setAll(state, action.payload.files)
+    foldersReceived(state, action: PayloadAction<FolderMeta[]>) {
+      foldersAdapter.setAll(state, action.payload)
+    },
+    toggleFolderExpansion(state, action: PayloadAction<string>) {
+      const path = action.payload
+      const folder = state.entities[path]
+      if (folder) {
+        folder.isExpanded = !folder.isExpanded
+      }
+      // TODO: if closing a folder, deselect all descendants
+    },
+    toggleFolderSelection(state, action: PayloadAction<string>) {
+      const path = action.payload
+      const folder = state.entities[path]
+      if (folder) {
+        folder.isSelected = !folder.isSelected
+      }
+    },
+    selectFolder(state, action: PayloadAction<string>) {
+      const path = action.payload
+      for (let id of state.ids) {
+        const folder = state.entities[id]
+        if (folder) {
+          if (id === path) {
+            folder.isSelected = true
+          }
+          else {
+            folder.isSelected = false
+          }
+        }
+      }
     }
   },
 })
 
-export const { foldersSlice } = foldersSlice.actions
-
+export const { foldersReceived, toggleFolderExpansion, toggleFolderSelection, selectFolder } = foldersSlice.actions
 
 export const foldersSelectors = foldersAdapter.getSelectors<RootState>(
   state => state.folders
+)
+
+export const selectTopLevelFolders = createSelector(
+  foldersSelectors.selectAll,
+  folders => folders.filter(folder => folder.path === folder.name)
+)
+
+// TODO: evaluate performance; consider proxy-memoize 
+// Ref: https://redux.js.org/usage/deriving-data-selectors#selector-factories
+export const makeSelectChildFoldersByParentPath = () => {
+  const selectChildFoldersByParentPath = createSelector(
+    [
+      foldersSelectors.selectAll,
+      (state: RootState, parentPath: string) => parentPath,
+    ],
+    (folders, parentPath) => folders.filter(folder => getParentPath(folder.name, folder.path) === parentPath)
+  )
+  return selectChildFoldersByParentPath
+}
+
+export const selectFoldersInScope = createSelector(
+  foldersSelectors.selectAll,
+  folders => {
+    const selectedFolders = folders.filter(folder => folder.isSelected)
+    // If a child of folder has been selected, eliminate its parent scope
+    const scopesToEliminate = new Set<string>()
+    for (let folder of selectedFolders) {
+      scopesToEliminate.add(getParentPath(folder.name, folder.path))
+    }
+    return selectedFolders.filter(folder => !scopesToEliminate.has(folder.path))
+  }
 )
 
 export default foldersSlice.reducer

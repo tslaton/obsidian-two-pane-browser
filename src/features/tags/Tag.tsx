@@ -1,3 +1,10 @@
+// Libraries
+import * as React from 'react'
+import { css } from '@emotion/react'
+// Modules
+import { useAppSelector } from '../../plugin/hooks'
+import { selectStylesByTag } from '../settings/settingsSlice'
+
 // TODO: think about how these work with editor extensions:
 // https://marcus.se.net/obsidian-plugin-docs/editor/extensions
 // https://marcus.se.net/obsidian-plugin-docs/editor/extensions/decorations
@@ -40,4 +47,22 @@ export function createTagStyle({ text, pill }: TagStyle) {
     padding: 0px 8px 2px 8px;
     border-radius: 10px;
   `
+}
+
+interface TagProps {
+  tag: string
+}
+
+export default function Tag(props: TagProps) {
+  const { tag } = props
+  const stylesByTag = useAppSelector(selectStylesByTag)
+
+  return (
+    <div css={css`
+      ${createTagStyle(stylesByTag[tag])}
+      margin-left: 4px;
+    `}>
+      {tag}      
+    </div>
+  )
 }

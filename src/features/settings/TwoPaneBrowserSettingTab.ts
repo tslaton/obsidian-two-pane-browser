@@ -4,9 +4,9 @@ import { App, PluginSettingTab, Setting, debounce } from 'obsidian'
 import type TwoPaneBrowserPlugin from '../../main'
 import store from '../../plugin/store'
 import { TwoPaneBrowserSettings, selectSettings } from './settingsSlice'
-import { tagStyles, createTagStyle } from '../../common/styles'
+import { tagStyles, createTagStyle } from '../../features/tags/Tag'
 
-export class TwoPaneBrowserSettingTab extends PluginSettingTab {
+export default class TwoPaneBrowserSettingTab extends PluginSettingTab {
 	plugin: TwoPaneBrowserPlugin
 	draftSettings: TwoPaneBrowserSettings
 

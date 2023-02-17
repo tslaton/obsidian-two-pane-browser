@@ -14,6 +14,7 @@ export function getTags(file: TFile, metadataCache: MetadataCache) {
   return [...allTags]
 }
 
+// TODO: delete?
 export function recurseChildren(obj: any, callback: (child: any) => void) {
   if (!obj) {
     return
@@ -22,4 +23,9 @@ export function recurseChildren(obj: any, callback: (child: any) => void) {
     callback(child)
     recurseChildren(child, callback)
   }
+}
+
+// Given the name and path for a file or folder, return its parent's path
+export function getParentPath(name: string, path: string) {
+  return path.substring(0, path.lastIndexOf(name) - 1)
 }
