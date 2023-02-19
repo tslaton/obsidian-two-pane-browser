@@ -1,9 +1,10 @@
 // Libraries
-import { FileStats } from 'obsidian'
+import { FileStats, moment } from 'obsidian'
 import { createSelector, createSlice, createEntityAdapter, PayloadAction } from '@reduxjs/toolkit'
 // Modules
 import type { RootState } from '../../plugin/store'
 import { selectPathsInScope } from '../folders/foldersSlice'
+import { selectSelectedFilter } from '../filters/filtersSlice'
 import { getParentPath } from '../../utils'
 
 export interface FileMeta {
@@ -53,8 +54,21 @@ export const filesSelectors = filesAdapter.getSelectors<RootState>(
 )
 export const selectFilesInScope = createSelector(
   filesSelectors.selectAll,
+  selectSelectedFilter,
   selectPathsInScope,
-  (files, pathsInScope) => files.filter(file => pathsInScope.has(getParentPath(file)))
+  (files, selectedFilter, pathsInScope) => {
+    if (!selectedFilter) {
+      return files.filter(file => pathsInScope.has(getParentPath(file)))
+    }
+    else {
+      if (selectedFilter.id === 'all') {
+        return files
+      }
+      else if (selectedFilter.id === 'recents') {
+        return files.filter(file => moment.duration(moment.now() - file.stat.mtime) <= moment.duration(7, 'days'))
+      }
+    }
+  }
 )
 
 export default filesSlice.reducer

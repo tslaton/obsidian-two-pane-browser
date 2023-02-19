@@ -5,7 +5,7 @@ import styled from '@emotion/styled'
 import { useAppSelector } from './hooks'
 import PluginContext from './PluginContext'
 import Folder from '../features/folders/Folder'
-import { selectTopLevelFolders, selectPathsInScope } from '../features/folders/foldersSlice'
+import { selectTopLevelFolders } from '../features/folders/foldersSlice'
 import FilePreview from '../features/files/FilePreview'
 import { selectFilesInScope } from '../features/files/filesSlice'
 import Filter from '../features/filters/Filter'
@@ -13,25 +13,22 @@ import { selectFilters } from '../features/filters/filtersSlice'
 
 export default function TwoPaneBrowser() {
   const topLevelFolders = useAppSelector(selectTopLevelFolders)
-  const pathsInScope = useAppSelector(selectPathsInScope)
   const filesInScope = useAppSelector(selectFilesInScope)
   const filters = useAppSelector(selectFilters)
   const plugin = React.useContext(PluginContext)
 
+  // FUTURE: Consider fetching files more efficiently (ie, before filters only fetched files for paths in scope)
   React.useEffect(() => {
     plugin.fetchFolders()
+    plugin.fetchFiles()
   }, [])
-
-  React.useEffect(() => {
-    plugin.fetchFiles(pathsInScope)
-  }, [pathsInScope])
 
   return (
     <StyledTwoPaneBrowser>
       <div className="left-pane">
         <h2>Filters</h2>
         {filters.map(filter =>
-          <Filter key={filter.id} filter={filter} />
+          <Filter key={filter.id} {...filter} />
         )}
         <h2>Folders</h2>
         {topLevelFolders.map(folder =>

@@ -8,6 +8,7 @@ import {
   FolderMeta, makeSelectChildFoldersByParentPath, 
   toggleFolderExpansion, toggleFolderSelection, selectFolder, 
 } from './foldersSlice'
+import { deselectAllFilters } from '../filters/filtersSlice'
 
 interface FolderProps {
   folder: FolderMeta
@@ -34,12 +35,13 @@ export default function Folder(props: FolderProps) {
     else {
       dispatch(selectFolder(folder.path))
     }
+    dispatch(deselectAllFilters())
   }
 
   return (
     <StyledFolder {...props}>
-      <div className="flex-folder-wrapper" onClick={(event) => toggleIsSelected(event)}>
-        <div className="clickable-icon" onClick={(event) => toggleIsExpanded(event)}>
+      <div className="flex-folder-wrapper" onClick={toggleIsSelected}>
+        <div className="clickable-icon" onClick={toggleIsExpanded}>
           <Icon size={18} />
         </div>
         <div className="folder-name">

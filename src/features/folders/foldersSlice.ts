@@ -71,13 +71,21 @@ export const foldersSlice = createSlice({
           folder.isSelected = (id === path)
         }
       }
-    }
+    },
+    deselectAllFolders(state) {
+      const folders = Object.values(state.entities)
+      for (let folder of folders) {
+        if (folder) {
+          folder.isSelected = false
+        }
+      }
+    },
   },
 })
 
 export const { 
   loadFolders, addFolder, updateFolder, removeFolder,
-  toggleFolderExpansion, toggleFolderSelection, selectFolder, 
+  toggleFolderExpansion, toggleFolderSelection, selectFolder, deselectAllFolders,
 } = foldersSlice.actions
 
 export const foldersSelectors = foldersAdapter.getSelectors<RootState>(
