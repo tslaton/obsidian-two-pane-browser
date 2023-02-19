@@ -8,11 +8,14 @@ import Folder from '../features/folders/Folder'
 import { selectTopLevelFolders, selectPathsInScope } from '../features/folders/foldersSlice'
 import FilePreview from '../features/files/FilePreview'
 import { selectFilesInScope } from '../features/files/filesSlice'
+import Filter from '../features/filters/Filter'
+import { selectFilters } from '../features/filters/filtersSlice'
 
 export default function TwoPaneBrowser() {
   const topLevelFolders = useAppSelector(selectTopLevelFolders)
   const pathsInScope = useAppSelector(selectPathsInScope)
   const filesInScope = useAppSelector(selectFilesInScope)
+  const filters = useAppSelector(selectFilters)
   const plugin = React.useContext(PluginContext)
 
   React.useEffect(() => {
@@ -26,6 +29,10 @@ export default function TwoPaneBrowser() {
   return (
     <StyledTwoPaneBrowser>
       <div className="left-pane">
+        <h2>Filters</h2>
+        {filters.map(filter =>
+          <Filter key={filter.id} filter={filter} />
+        )}
         <h2>Folders</h2>
         {topLevelFolders.map(folder =>
           <Folder key={folder.path} folder={folder} level={0} />
