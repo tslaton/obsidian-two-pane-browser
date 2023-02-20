@@ -10,8 +10,6 @@ import FilePreview from '../features/files/FilePreview'
 import { selectFilesInScope } from '../features/files/filesSlice'
 import Filter from '../features/filters/Filter'
 import { selectFilters } from '../features/filters/filtersSlice'
-import ButtonBar from '../features/toggles/ButtonBar'
-import { selectActiveToggles } from '../features/toggles/togglesSlice'
 import Search from '../features/search/Search'
 
 export default function TwoPaneBrowser() {
@@ -19,8 +17,6 @@ export default function TwoPaneBrowser() {
   const topLevelFolders = useAppSelector(selectTopLevelFolders)
   const filesInScope = useAppSelector(selectFilesInScope)
   const filters = useAppSelector(selectFilters)
-  const activeToggles = useAppSelector(selectActiveToggles)
-  const showSearch = !!activeToggles.find(toggle => toggle.id === 'show-search')?.isActive
 
   // FUTURE: Consider fetching files more efficiently (ie, before filters only fetched files for paths in scope)
   React.useEffect(() => {
@@ -41,8 +37,7 @@ export default function TwoPaneBrowser() {
         )}
       </div>
       <div className="right-pane">
-        <ButtonBar />
-        {showSearch && <Search />}
+        <Search />
         <h2>Files</h2>
         {filesInScope.map(file =>
           <FilePreview key={file.path} file={file} />
@@ -59,12 +54,13 @@ const StyledTwoPaneBrowser = styled.div`
 
   .left-pane {
     width: 280px;
-    padding: 0 20px 0 20px;
+    background-color: var(--background-secondary);
+    padding: 0 12px;
   }
 
   .right-pane {
     flex: 1;
-    background-color: #222;
-    padding: 0 20px 0 20px;
+    background-color: var(--background-primary);
+    padding: 0 12px;
   }
 `

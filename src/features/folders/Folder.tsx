@@ -63,7 +63,10 @@ const StyledFolder = styled.div<FolderProps>`
     flex-direction: horizontal;
     padding: 10px;
     border-radius: 4px;
-    background-color: ${props => props.folder.isSelected ? '#333' : 'inherit' };
+    background-color: ${props => props.folder.isSelected ? 'var(--background-modifier-hover)' : 'inherit' };
+    &:hover {
+      background-color: var(--background-modifier-hover);
+    }
   }
 
   .folder-name {

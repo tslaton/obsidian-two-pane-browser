@@ -46,7 +46,10 @@ export default function FilePreview(props: FilePreviewProps) {
 const StyledFilePreview = styled.div<FilePreviewProps>`
   padding: 10px;
   border-radius: 4px;
-  background-color: ${props => props.file.isSelected ? '#333' : 'inherit'};
+  background-color: ${props => props.file.isSelected ? 'var(--background-modifier-hover)' : 'inherit'};
+  &:hover {
+    background-color: var(--background-modifier-hover);
+  }
 
   .file-name {
     font-size: 16px;
@@ -60,6 +63,6 @@ const StyledFilePreview = styled.div<FilePreviewProps>`
   }
 
   .last-modified {
-    color: cyan;
+    color: var(--text-muted);
   }
 `

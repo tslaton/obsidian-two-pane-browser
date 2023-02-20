@@ -40,7 +40,10 @@ const StyledFilter = styled.div<FilterMeta>`
   flex-direction: horizontal;
   padding: 10px;
   border-radius: 4px;
-  background-color: ${filter => filter.isSelected ? '#333' : 'inherit' };
+  background-color: ${filter => filter.isSelected ? 'var(--background-modifier-hover)' : 'inherit' };
+  &:hover {
+    background-color: var(--background-modifier-hover);
+  }
 
   .filter-name {
     line-height: 24px;
