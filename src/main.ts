@@ -86,6 +86,8 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 	async inflatedFileMetaFromTFile(file: TFile, fileCache: CachedMetadata|null=null): Promise<FileMeta> {
 		const contents = await app.vault.cachedRead(file)
 		// FUTURE: leverage cache.sections to do Headers in previews
+		// FUTURE: process only the beginning of a potentially long string
+		// Ref: https://www.theinformationlab.co.uk/2020/01/03/regex-extracting-the-first-n-words/
 		const createFilePreview = (numLines=2) => {
 			let preview = ''
 			const lines = contents.split('\n')

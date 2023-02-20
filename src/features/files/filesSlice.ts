@@ -67,6 +67,9 @@ export const selectFilesInScope = createSelector(
       else if (selectedFilter.id === 'recents') {
         return files.filter(file => moment.duration(moment.now() - file.stat.mtime) <= moment.duration(7, 'days'))
       }
+      else {
+        return []
+      }
     }
   }
 )
