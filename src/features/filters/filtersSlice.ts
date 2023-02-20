@@ -13,6 +13,7 @@ export const filtersSlice = createSlice({
   name: 'filters',
   initialState: [
     { id: 'all', name: 'All', isSelected: true },
+    { id: 'inbox', name: 'Inbox', isSelected: false },
     { id: 'recents', name: 'Recently modified', isSelected: false },
   ] as FilterMeta[],
   reducers: {

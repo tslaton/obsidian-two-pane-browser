@@ -64,6 +64,9 @@ export const selectFilesInScope = createSelector(
       if (selectedFilter.id === 'all') {
         return files
       }
+      else if (selectedFilter.id === 'inbox') {
+        return files.filter(file => getParentPath(file) === '')
+      }
       else if (selectedFilter.id === 'recents') {
         return files.filter(file => moment.duration(moment.now() - file.stat.mtime) <= moment.duration(7, 'days'))
       }

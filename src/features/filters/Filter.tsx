@@ -1,7 +1,7 @@
 // Libraries
 import * as React from 'react'
 import styled from '@emotion/styled'
-import { FoldersIcon, HistoryIcon, FilterIcon } from 'lucide-react'
+import { LucideIcon, FoldersIcon, InboxIcon, HistoryIcon, FilterIcon } from 'lucide-react'
 // Modules
 import { FilterMeta, selectFilter } from '../../features/filters/filtersSlice'
 import { deselectAllFolders } from '../folders/foldersSlice'
@@ -16,13 +16,12 @@ export default function Filter(filter: FilterMeta) {
     dispatch(deselectAllFolders())
   }
 
-  const Icon = (
-    filter.id === 'all' ? 
-      FoldersIcon : 
-    filter.id === 'recents' ?
-      HistoryIcon :
-      FilterIcon
-  )
+  const iconMap: Record<string, LucideIcon> = {
+    all: FoldersIcon,
+    inbox: InboxIcon,
+    recents: HistoryIcon,
+  }
+  const Icon = iconMap[filter.id] || FilterIcon
   
   return (
     <StyledFilter {...filter} onClick={toggleIsSelected}>
