@@ -2,9 +2,11 @@
 import { debounce } from 'obsidian'
 import * as React from 'react'
 import styled from '@emotion/styled'
-import { SearchIcon, FilePlus2Icon, TagsIcon } from 'lucide-react'
+import { SearchIcon, EditIcon, TagsIcon, SortAscIcon, SortDescIcon } from 'lucide-react'
 // Modules
 import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
+import SortOptionsContextMenu from './SortOptionsContextMenu'
+import { selectSortOption } from '../search/searchSlice'
 import { selectActiveSearchOptions, toggleSearchOption, updateSearchQuery } from '../search/searchSlice'
 // import ColorCategory from '../tags/TagCategory'
 // import Tag from '../tags/Tag'
@@ -13,6 +15,8 @@ import { selectActiveSearchOptions, toggleSearchOption, updateSearchQuery } from
 // For clicking tags: https://discord.com/channels/686053708261228577/840286264964022302/1077674157107576872
 export default function Search() {
   const dispatch = useAppDispatch()
+  const sortOption = useAppSelector(selectSortOption)
+  const SortIcon = sortOption.direction === 'asc' ? SortAscIcon : SortDescIcon
   const activeOptions = useAppSelector(selectActiveSearchOptions)
   const showSearch = !!activeOptions.find(option => option.id === 'show-search')?.isActive
   const showTags = !!activeOptions.find(option => option.id === 'show-tags')?.isActive
@@ -21,6 +25,11 @@ export default function Search() {
   // console.log('tagsInScope: ', tagsInScope)
   // const tagStylesInScope = useAppSelector(selectTagStylesInScope)
   // console.log('tagStylesInScope: ', tagStylesInScope)
+
+  function showSortOptionsContextMenu(event: React.MouseEvent) {
+    const menu = SortOptionsContextMenu(sortOption)
+    menu.showAtMouseEvent(event.nativeEvent)
+  }
 
   function toggleShowSearch() {
     dispatch(toggleSearchOption('show-search'))
@@ -42,11 +51,14 @@ export default function Search() {
   return (
     <StyledSearch {...{showSearch, showTags}}>
       <div className="button-bar">
+        <div className="clickable-icon" onClick={showSortOptionsContextMenu}>
+          <SortIcon size={20} />
+        </div>
         <div className="clickable-icon" onClick={toggleShowSearch}>
           <SearchIcon size={20} />
         </div>
         <div className="clickable-icon" onClick={createNewDocument}>
-          <FilePlus2Icon size={20} />
+          <EditIcon size={20} />
         </div>
       </div>
       {showSearch &&

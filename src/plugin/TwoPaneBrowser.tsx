@@ -8,17 +8,17 @@ import PluginContext from './PluginContext'
 import Folder from '../features/folders/Folder'
 import { selectTopLevelFolders } from '../features/folders/foldersSlice'
 import FilePreview from '../features/files/FilePreview'
-import { selectFilesInScope } from '../features/files/filesSlice'
 import Filter from '../features/filters/Filter'
 import { selectFilters } from '../features/filters/filtersSlice'
 import Search from '../features/search/Search'
+import { selectSortedFilesInScope } from '../features/search/searchSlice'
 import { selectStylesByTag } from '../features/settings/settingsSlice'
 import { rgbFromHex } from '../utils'
 
 export default function TwoPaneBrowser() {
   const plugin = React.useContext(PluginContext)
   const topLevelFolders = useAppSelector(selectTopLevelFolders)
-  const filesInScope = useAppSelector(selectFilesInScope)
+  const filesInScope = useAppSelector(selectSortedFilesInScope)
   const filters = useAppSelector(selectFilters)
   const stylesByTag = useAppSelector(selectStylesByTag)
   let tagsCSS = ''
