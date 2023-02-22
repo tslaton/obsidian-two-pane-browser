@@ -13,6 +13,7 @@ import Filter from '../features/filters/Filter'
 import { selectFilters } from '../features/filters/filtersSlice'
 import Search from '../features/search/Search'
 import { selectStylesByTag } from '../features/settings/settingsSlice'
+import { rgbFromHex } from '../utils'
 
 export default function TwoPaneBrowser() {
   const plugin = React.useContext(PluginContext)
@@ -23,8 +24,8 @@ export default function TwoPaneBrowser() {
   let tagsCSS = ''
   for (let [tag, style] of Object.entries(stylesByTag)) {
     tag = tag.substring(1)
-    // TODO: Set background color as alpha 0.1 variant
-    tagsCSS += `.cm-tag-${tag} { color: ${style.color}; }`
+    const { r, g, b } = rgbFromHex(style.color)
+    tagsCSS += `.cm-tag-${tag} { color: ${style.color}; background-color: rgba(${r},${g},${b},0.1); }`
   }
 
   // FUTURE: Consider fetching files more efficiently (ie, before filters only fetched files for paths in scope)
