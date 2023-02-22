@@ -9,6 +9,6 @@ div.workspace-leaf-content[data-type="search"] {
 }
 
 /* disable default padding on two-pane-browser-view */ 
-div.workspace-leaf-content[data-type="two-pane-browser-view"] > div.view-content {
+div.workspace-leaf-content[data-type="two-pane-browser"] > div.view-content {
   padding: 0;
 }

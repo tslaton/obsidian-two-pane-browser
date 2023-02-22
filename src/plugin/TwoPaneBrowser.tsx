@@ -42,20 +42,29 @@ export default function TwoPaneBrowser() {
       />
       <div className="left-pane">
         <h2>Filters</h2>
-        {filters.map(filter =>
-          <Filter key={filter.id} {...filter} />
-        )}
+        <div className="scoller">
+          {filters.map(filter =>
+            <Filter key={filter.id} {...filter} />
+          )}
+          <div className="spacer" />
+        </div>
         <h2>Folders</h2>
-        {topLevelFolders.map(folder =>
-          <Folder key={folder.path} folder={folder} level={0} />
-        )}
+        <div className="scroller">
+          {topLevelFolders.map(folder =>
+            <Folder key={folder.path} folder={folder} level={0} />
+          )}
+          <div className="spacer" />
+        </div>
       </div>
       <div className="right-pane">
         <Search />
         <h2>Files</h2>
-        {filesInScope.map(file =>
-          <FilePreview key={file.path} file={file} />
-        )}
+        <div className="scroller">
+          {filesInScope.map(file =>
+            <FilePreview key={file.path} file={file} />
+          )}
+          <div className="spacer" />
+        </div>
       </div>
     </StyledTwoPaneBrowser>
   )
@@ -70,11 +79,25 @@ const StyledTwoPaneBrowser = styled.div`
     width: 280px;
     background-color: var(--background-secondary);
     padding: 0 12px;
+    display: flex;
+    flex-direction: column;
   }
 
   .right-pane {
     flex: 1;
     background-color: var(--background-primary);
     padding: 0 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .scroller {
+    flex: 1;
+    overflow: auto;
+  }
+
+  .spacer {
+    height: 12px;
   }
 `
