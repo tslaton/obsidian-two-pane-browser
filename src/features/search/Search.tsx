@@ -6,12 +6,21 @@ import { SearchIcon, FilePlus2Icon, TagsIcon } from 'lucide-react'
 // Modules
 import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
 import { selectActiveSearchOptions, toggleSearchOption, updateSearchQuery } from '../search/searchSlice'
+// import ColorCategory from '../tags/TagCategory'
+// import Tag from '../tags/Tag'
+// import { selectTagsInScope, selectTagStylesInScope } from '../tags/tagsSelectors'
 
+// For clicking tags: https://discord.com/channels/686053708261228577/840286264964022302/1077674157107576872
 export default function Search() {
   const dispatch = useAppDispatch()
   const activeOptions = useAppSelector(selectActiveSearchOptions)
   const showSearch = !!activeOptions.find(option => option.id === 'show-search')?.isActive
   const showTags = !!activeOptions.find(option => option.id === 'show-tags')?.isActive
+  
+  // const tagsInScope = useAppSelector(selectTagsInScope)
+  // console.log('tagsInScope: ', tagsInScope)
+  // const tagStylesInScope = useAppSelector(selectTagStylesInScope)
+  // console.log('tagStylesInScope: ', tagStylesInScope)
 
   function toggleShowSearch() {
     dispatch(toggleSearchOption('show-search'))
@@ -44,13 +53,17 @@ export default function Search() {
         <>
           <div className="search-flex-wrapper">
             <div className="search-input-container">
-              <input name="scoped-search" onChange={debouncedUpdateSearchQuery} />
+              <input type="text" name="scoped-search" onChange={debouncedUpdateSearchQuery} />
             </div>
             <div className="clickable-icon" onClick={toggleShowTags}>
               <TagsIcon size={22} />
             </div>
           </div>
-          {showTags && <div>tags go here</div>}
+          {showTags && 
+            <div>
+              tags go here
+            </div>
+          }
           <hr />
         </>
       }
@@ -83,16 +96,6 @@ const StyledSearch = styled.div<StyledSearchProps>`
 
     .search-input-container {
       width: 100%;
-
-      input {
-        height: 2.2em;
-        background-color: var(--background-modifier-form-field);
-        border-style: solid;
-        border-color: var(--divider-color);
-        border-width: calc(2*var(--divider-width));
-        box-shadow: none;
-        border-radius: 4px;
-      }
     }
   }
 

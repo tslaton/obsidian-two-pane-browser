@@ -7,7 +7,7 @@ import {
 // Modules
 import store from './plugin/store'
 import TwoPaneBrowserView, { TWO_PANE_BROWSER_VIEW } from './plugin/view'
-import TwoPaneBrowserSettingTab from './features/settings/TwoPaneBrowserSettingTab'
+import TwoPaneBrowserSettingTab from './plugin/settingsTab'
 import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, loadSettings } from './features/settings/settingsSlice'
 import { FileMeta, loadFiles, addFile, updateFile, removeFile } from './features/files/filesSlice'
 import { FolderMeta, loadFolders, addFolder, updateFolder, removeFolder } from './features/folders/foldersSlice'

@@ -9,7 +9,7 @@ import PluginContext from './PluginContext'
 import TwoPaneBrowser from './TwoPaneBrowser'
 import store from './store'
 
-export const TWO_PANE_BROWSER_VIEW = 'two-pane-browser-view'
+export const TWO_PANE_BROWSER_VIEW = 'two-pane-browser'
 
 export default class TwoPaneBrowserView extends ItemView {
   root?: Root
@@ -18,6 +18,7 @@ export default class TwoPaneBrowserView extends ItemView {
   constructor(leaf: WorkspaceLeaf, plugin: TwoPaneBrowserPlugin) {
     super(leaf)
     this.plugin = plugin
+    this.icon = 'folder-tree'
   }
 
   getViewType() {
@@ -25,7 +26,7 @@ export default class TwoPaneBrowserView extends ItemView {
   }
 
   getDisplayText() {
-    return "Two Pane Browser"
+    return "Two-Pane Browser"
   }
 
   async onOpen() {

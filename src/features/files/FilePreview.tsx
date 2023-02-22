@@ -60,9 +60,14 @@ const StyledFilePreview = styled.div<FilePreviewProps>`
     display: flex;
     flex-direction: horizontal;
     flex-wrap: wrap;
+
+    .tag {
+      margin: 2px;
+    }
   }
 
   .last-modified {
     color: var(--text-muted);
+    margin-right: 4px;
   }
 `

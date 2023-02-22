@@ -33,3 +33,7 @@ export function getDescendantPaths(path: string, candidatePaths: string[]) {
 export function deepcopy(obj: any) {
   return JSON.parse(JSON.stringify(obj))
 }
+
+export function sortedEntries(obj: any) {
+  return Object.entries(obj).sort((a, b) => a[0].localeCompare(b[0]))
+}

@@ -2,15 +2,22 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit'
 // Modules
 import type { RootState } from '../../plugin/store'
-import { TagStyle, tagStyles } from '../../features/tags/Tag'
 
-export const DEFAULT_SETTINGS = {
-  tagsByStyleName: Object.fromEntries(
-    Object.keys(tagStyles).map(styleName => [styleName, ''])
-  ),
+// CSS props to values... for now, just color
+export type TagCategoryStyle = Record<string,string>
+
+export interface TagCategoryMeta {
+  style: TagCategoryStyle
+  tags: string[]
 }
 
-export type TwoPaneBrowserSettings = typeof DEFAULT_SETTINGS
+export interface TwoPaneBrowserSettings {
+  tagCategories: Record<string, TagCategoryMeta>
+}
+
+export const DEFAULT_SETTINGS = {
+  tagCategories: {},
+} as TwoPaneBrowserSettings
 
 export const settingsSlice = createSlice({
   name: 'settings',
@@ -25,17 +32,17 @@ export const settingsSlice = createSlice({
 export const { loadSettings } = settingsSlice.actions
 
 export const selectSettings = (state: RootState) => state.settings
-export const selectStylesByTag = createSelector(
+export const selectTagCategories = createSelector(
   selectSettings,
-  settings => {
-    const stylesByTag: Record<string, TagStyle> = {}
-    for (let [styleName, tagsAsString] of Object.entries(settings.tagsByStyleName)) {
-      let tags = tagsAsString.split(' ')
-      // do a small amount of cleaning so we have valid tags
-      tags = tags.map(tag => tag.trim()).filter(tag => tag.startsWith('#'))
-      for (let tag of tags) {
-        // @ts-ignore
-        stylesByTag[tag] = tagStyles[styleName]
+  settings => settings.tagCategories
+)
+export const selectStylesByTag = createSelector(
+  selectTagCategories,
+  tagCategories => {
+    const stylesByTag: Record<string, TagCategoryStyle> = {}
+    for (let [_, categoryMeta] of Object.entries(tagCategories)) {
+      for (let tag of categoryMeta.tags) {
+        stylesByTag[tag] = categoryMeta.style
       }
     }
     return stylesByTag

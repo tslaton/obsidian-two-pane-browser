@@ -1,5 +1,6 @@
 // Libraries
 import * as React from 'react'
+import { css, Global } from '@emotion/react'
 import styled from '@emotion/styled'
 // Modules
 import { useAppSelector } from './hooks'
@@ -11,12 +12,20 @@ import { selectFilesInScope } from '../features/files/filesSlice'
 import Filter from '../features/filters/Filter'
 import { selectFilters } from '../features/filters/filtersSlice'
 import Search from '../features/search/Search'
+import { selectStylesByTag } from '../features/settings/settingsSlice'
 
 export default function TwoPaneBrowser() {
   const plugin = React.useContext(PluginContext)
   const topLevelFolders = useAppSelector(selectTopLevelFolders)
   const filesInScope = useAppSelector(selectFilesInScope)
   const filters = useAppSelector(selectFilters)
+  const stylesByTag = useAppSelector(selectStylesByTag)
+  let tagsCSS = ''
+  for (let [tag, style] of Object.entries(stylesByTag)) {
+    tag = tag.substring(1)
+    // TODO: Set background color as alpha 0.1 variant
+    tagsCSS += `.cm-tag-${tag} { color: ${style.color}; }`
+  }
 
   // FUTURE: Consider fetching files more efficiently (ie, before filters only fetched files for paths in scope)
   React.useEffect(() => {
@@ -26,6 +35,10 @@ export default function TwoPaneBrowser() {
 
   return (
     <StyledTwoPaneBrowser>
+      <Global styles={css`    
+        ${tagsCSS}
+      `}
+      />
       <div className="left-pane">
         <h2>Filters</h2>
         {filters.map(filter =>
