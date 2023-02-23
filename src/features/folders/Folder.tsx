@@ -58,7 +58,7 @@ export default function Folder(props: FolderProps) {
 const StyledFolder = styled.div<FolderProps>`
   margin-left: ${props => `${props.level*20}px`};
 
-  .flex-folder-wrapper {
+  & > .flex-folder-wrapper {
     display: flex;
     flex-direction: horizontal;
     padding: 10px;
