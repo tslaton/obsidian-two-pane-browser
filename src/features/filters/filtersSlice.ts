@@ -14,7 +14,7 @@ export const filtersSlice = createSlice({
   initialState: [
     { id: 'all', name: 'All', isSelected: true },
     { id: 'inbox', name: 'Inbox', isSelected: false },
-    { id: 'recents', name: 'Recently modified', isSelected: false },
+    { id: 'recents', name: 'Last 7 days', isSelected: false },
   ] as FilterMeta[],
   reducers: {
     selectFilter(state, action: PayloadAction<string>) {

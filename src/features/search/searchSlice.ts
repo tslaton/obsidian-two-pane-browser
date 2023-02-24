@@ -45,12 +45,16 @@ export const searchSlice = createSlice({
 export const { updateSearchQuery, toggleSearchOption, setSortOption } = searchSlice.actions
 
 export const selectSearchQuery = (state: RootState) => state.search.query
+
 export const selectSearchOptions = (state: RootState) => state.search.options
+
 export const selectActiveSearchOptions = createSelector(
   selectSearchOptions,
   options => options.filter(option => option.isActive === true)
 )
+
 export const selectSortOption = (state: RootState) => state.search.sort
+
 export const selectSortedFilesInScope = createSelector(
   selectFilesInScope,
   selectSortOption,

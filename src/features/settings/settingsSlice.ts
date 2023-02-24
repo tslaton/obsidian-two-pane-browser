@@ -32,10 +32,12 @@ export const settingsSlice = createSlice({
 export const { loadSettings } = settingsSlice.actions
 
 export const selectSettings = (state: RootState) => state.settings
+
 export const selectTagCategories = createSelector(
   selectSettings,
   settings => settings.tagCategories
 )
+
 export const selectStylesByTag = createSelector(
   selectTagCategories,
   tagCategories => {

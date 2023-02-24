@@ -52,6 +52,7 @@ export const { loadFiles, addFile, updateFile, removeFile, selectFile } = filesS
 export const filesSelectors = filesAdapter.getSelectors<RootState>(
   state => state.files
 )
+
 export const selectFilesInScope = createSelector(
   filesSelectors.selectAll,
   selectSelectedFilter,
