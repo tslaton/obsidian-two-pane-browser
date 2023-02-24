@@ -3,7 +3,7 @@ import { moment } from 'obsidian'
 import * as React from 'react'
 import styled from '@emotion/styled'
 // Modules
-import { SelectableFile, selectFile } from './filesSlice'
+import { SelectableFile } from './filesSlice'
 import { useAppDispatch } from '../../plugin/hooks'
 import PluginContext from '../../plugin/PluginContext'
 import Tag from '../tags/Tag'
@@ -19,7 +19,7 @@ export default function FilePreview(props: FilePreviewProps) {
   const plugin = React.useContext(PluginContext)
 
   function openFile() {
-    dispatch(selectFile(file.path))
+    // plugin will dispatch selectFile(file.path) after it is opened
     plugin.openFile(file)
   }
 
