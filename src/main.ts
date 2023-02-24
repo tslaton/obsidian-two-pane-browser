@@ -11,8 +11,8 @@ import TwoPaneBrowserView, { TWO_PANE_BROWSER_VIEW } from './plugin/view'
 import TwoPaneBrowserSettingTab from './plugin/settingsTab'
 import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, loadSettings } from './features/settings/settingsSlice'
 import { FileMeta, loadFiles, addFile, updateFile, removeFile, selectFile } from './features/files/filesSlice'
-import { FolderMeta, loadFolders, addFolder, updateFolder, removeFolder } from './features/folders/foldersSlice'
-import { getParentPath } from './utils'
+import { FolderMeta, loadFolders, addFolder, updateFolder, removeFolder, awaitRenameFolder } from './features/folders/foldersSlice'
+import { getParentPath, selectElementContent } from './utils'
 
 export default class TwoPaneBrowserPlugin extends Plugin {
 	// Used to avoid a timeout waiting for the beginning of a new file 
@@ -98,18 +98,14 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 			// Event fires when a file tab is closed, too (with file === null)
 			if (file) {
 				if (this.renameNextFileOpened) {
-					// Asserting markdownView is not null
-					const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView) as MarkdownView
+					const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView)!
 					const container = markdownView.containerEl
 					let titleContainer = container.querySelector('div[contenteditable="true"].inline-title') as HTMLElement
 					// It's possible the user has elected to hide inline titles
 					if (!titleContainer || getComputedStyle(titleContainer).display === 'none') {
 						titleContainer = container.querySelector('div[contenteditable="true"].view-header-title') as HTMLElement
 					}
-					// Asserting titleContainer is not null
-					requestAnimationFrame(() => {
-						getSelection()?.selectAllChildren(titleContainer)
-					})
+					selectElementContent(titleContainer)
 					this.renameNextFileOpened = false
 				}
 				// TODO: fancier dispatch for folder tree context and/or isActive vs. isSelected?
@@ -194,6 +190,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 			path: folder.path,
 			isExpanded: false,
 			isSelected: false,
+			isAwaitingRename: false,
 		}
 	}
 
@@ -227,17 +224,40 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		}
 	}
 
-	async createFile() {
-		const f = this.app.workspace.getActiveFile()
+	async createFile(parentPath: string = '') {
 		const name = `${moment().format('YYYY-MM-DD HH-mm-ss')}.md`
+		let path = parentPath
+			? parentPath
+			: this.app.workspace.getActiveFile()?.parent.path
 		let createdFile: TFile
-		if (f) {
-			createdFile = await this.app.vault.create(`${f.parent.path}/${name}`, '')
+		if (path) {
+			createdFile = await this.app.vault.create(`${path}/${name}`, '')
 		}
 		else {
 			createdFile = await this.app.vault.create(name, '')
 		}
 		this.openFile(createdFile, true)
+	}
+
+	// TODO: add create folder button to create new at root
+	async createFolder(parentPath: string = '') {
+		const name = moment().format('YYYY-MM-DD HH-mm-ss')
+		const newFolderPath = parentPath
+			? `${parentPath}/${name}`
+			: name
+		await this.app.vault.createFolder(newFolderPath)
+		store.dispatch(awaitRenameFolder(newFolderPath))
+	}
+
+	async renameFolder(path: string, newPath: string) {
+		const f = this.app.vault.getAbstractFileByPath(path)!
+		this.app.vault.rename(f, newPath)
+	}
+
+	// TODO: show a warning for attempt to delete non-empty folder
+	deleteFileOrFolder(path: string) {
+		const f = this.app.vault.getAbstractFileByPath(path)!
+		this.app.vault.delete(f, true)
 	}
 
 	openFile(f: TFile | FileMeta, renameOnOpen: boolean = false) {

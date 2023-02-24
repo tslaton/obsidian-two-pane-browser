@@ -9,6 +9,7 @@ export interface FolderMeta {
   path: string
   isExpanded: boolean
   isSelected: boolean
+  isAwaitingRename: boolean
 }
 
 const foldersAdapter = createEntityAdapter<FolderMeta>({
@@ -26,65 +27,67 @@ export const foldersSlice = createSlice({
     addFolder: foldersAdapter.addOne,
     updateFolder: foldersAdapter.updateOne,
     removeFolder: foldersAdapter.removeOne,
+    awaitRenameFolder(state, action: PayloadAction<string>) {
+      const path = action.payload
+      const folder = state.entities[path]!
+      folder.isAwaitingRename = true
+      const parentPath = getParentPath(folder)
+      const parentFolder = state.entities[parentPath]
+      if (parentFolder) {
+        parentFolder.isExpanded = true
+      }
+    },
+    stopAwaitingRenameFolder(state, action: PayloadAction<string>) {
+      const path = action.payload
+      const folder = state.entities[path]!
+      folder.isAwaitingRename = false
+    },
     toggleFolderExpansion(state, action: PayloadAction<string>) {
       const path = action.payload
-      const folder = state.entities[path]
-      if (folder) {
-        folder.isExpanded = !folder.isExpanded
-        // Deselect all descendants
-        // const allFolderPaths = state.ids as string[]
-        // const descendantPaths = getDescendantPaths(folder.path, allFolderPaths)
-        // for (let descendantPath of descendantPaths) {
-        //   const descendantFolder = state.entities[descendantPath]
-        //   if (descendantFolder) {
-        //     descendantFolder.isSelected = false
-        //   }
-        // }
-      }
+      const folder = state.entities[path]!
+      folder.isExpanded = !folder.isExpanded
+      // Deselect all descendants
+      // const allFolderPaths = state.ids as string[]
+      // const descendantPaths = getDescendantPaths(folder.path, allFolderPaths)
+      // for (let descendantPath of descendantPaths) {
+      //   const descendantFolder = state.entities[descendantPath]!
+      //   descendantFolder.isSelected = false
+      // }
     },
     toggleFolderSelection(state, action: PayloadAction<string>) {
       const path = action.payload
-      const folder = state.entities[path]
-      if (folder) {
-        folder.isSelected = !folder.isSelected
-        // Deselect parent - probably not desirable
-        // const parentFolder = state.entities[getParentPath(folder)]
-        // if (parentFolder) {
-        //   parentFolder.isSelected = false
-        // }
-        // Deselect all descendants
-        // const allFolderPaths = state.ids as string[]
-        // const descendantPaths = getDescendantPaths(folder.path, allFolderPaths)
-        // for (let descendantPath of descendantPaths) {
-        //   const descendantFolder = state.entities[descendantPath]
-        //   if (descendantFolder) {
-        //     descendantFolder.isSelected = false
-        //   }
-        // }
-      }
+      const folder = state.entities[path]!
+      folder.isSelected = !folder.isSelected
+      // Deselect parent - probably not desirable
+      // const parentFolder = state.entities[getParentPath(folder)]!
+      // parentFolder.isSelected = false
+      // Deselect all descendants
+      // const allFolderPaths = state.ids as string[]
+      // const descendantPaths = getDescendantPaths(folder.path, allFolderPaths)
+      // for (let descendantPath of descendantPaths) {
+      //   const descendantFolder = state.entities[descendantPath]!
+      //   descendantFolder.isSelected = false
+      // }
     },
     selectFolder(state, action: PayloadAction<string>) {
       const path = action.payload
       for (let id of state.ids) {
-        const folder = state.entities[id]
-        if (folder) {
-          folder.isSelected = (id === path)
-        }
+        const folder = state.entities[id]!
+        folder.isSelected = (id === path)
       }
     },
     deselectAllFolders(state) {
-      const folders = Object.values(state.entities)
+      const folders = Object.values(state.entities) as FolderMeta[]
       for (let folder of folders) {
-        if (folder) {
-          folder.isSelected = false
-        }
+        folder.isSelected = false
       }
     },
   },
 })
 
 export const { 
-  loadFolders, addFolder, updateFolder, removeFolder,
+  loadFolders, addFolder, updateFolder, removeFolder, 
+  awaitRenameFolder, stopAwaitingRenameFolder,
   toggleFolderExpansion, toggleFolderSelection, selectFolder, deselectAllFolders,
 } = foldersSlice.actions
 

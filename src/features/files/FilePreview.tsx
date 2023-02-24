@@ -3,9 +3,10 @@ import { moment } from 'obsidian'
 import * as React from 'react'
 import styled from '@emotion/styled'
 // Modules
-import { SelectableFile } from './filesSlice'
-import { useAppDispatch } from '../../plugin/hooks'
 import PluginContext from '../../plugin/PluginContext'
+import { useAppDispatch } from '../../plugin/hooks'
+import FileContextMenu from './FileContextMenu'
+import { SelectableFile } from './filesSlice'
 import Tag from '../tags/Tag'
 
 interface FilePreviewProps {
@@ -23,8 +24,13 @@ export default function FilePreview(props: FilePreviewProps) {
     plugin.openFile(file)
   }
 
+  function onContextMenu(event: React.MouseEvent) {
+    const menu = FileContextMenu(file, plugin)
+    menu.showAtMouseEvent(event.nativeEvent)
+  }
+
   return (
-    <StyledFilePreview {...props} onClick={openFile}>
+    <StyledFilePreview {...props} onClick={openFile} onContextMenu={onContextMenu}>
       <div className="file-name">
         {name.replace(/\.[^/.]+$/, '')}
       </div>
