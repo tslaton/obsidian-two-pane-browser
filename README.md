@@ -1,95 +1,35 @@
-# Obsidian Sample Plugin
+# Obsidian Two-Pane Browser
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+This plugin adds a two-pane browser to [Obsidian](https://obsidian.md). Instead of a file tree, starred documents, and search in separate sidebar tabs, this browser provides similar features and more in a single sidebar view.
 
-This project uses Typescript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in Typescript Definition format, which contains TSDoc comments describing what it does.
+Currently, this plugin only supports the desktop version of Obsidian.
 
-**Note:** The Obsidian API is still in early alpha and is subject to change at any time!
+## Features
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Changes the default font color to red using `styles.css`.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+### Folders | Left Pane
 
-## First time developing plugins?
+The left pane holds the folder tree. Unlike the standard file tree, the folder tree will only ever contain folders. You can select one or more folders to show all files descended from them in the right pane.
 
-Quick starting guide for new plugin devs:
+### File previews | Right Pane
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+The right pane shows files rendered as previews plus metadata, like their tags. Additionally, it allows you to perform query-based or tag-based searches to further filter the files in already in scope according to the selected folders or global filters.
 
-## Releasing new releases
+### Tags | Right Pane
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+In Obsidian's core tags plugin, you see one list of tags across all of the files in your vault. Instead, when using this plugin, the tags you can use to filter your files are scoped to the folders or filters selected in the left pane. This can help keep different areas of your life a little more separate, even within one vault. Tags can also be assigned colors in the settings for the plugin. Colors can be a convenient way to categorize tags related to different areas. If you want to see all of your tags, use the `All` filter. Because you can use folders to namespace tags and colors to categorize them, you may not need to use hierarchical tags when using this plugin. In fact, using a flat tagging scheme can (a) look cleaner on file previews and (b) be more dynamically namespaced by changing the folders, filters, and tag colors in scope.
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+### Global filters | Left Pane
 
-## Adding your plugin to the community plugin list
+Global filters are a feature in the left pane that perform predefined or saved searches across all files in your library.
 
-- Check https://github.com/obsidianmd/obsidian-releases/blob/master/plugin-review.md
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+## Installation for development
 
-## How to use
-
-- Clone this repo.
-- `npm i` or `yarn` to install dependencies
-- `npm run dev` to start compilation in watch mode.
-
-## Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint .\src\`
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
-```
-
-If you have multiple URLs, you can also do:
-
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+- Create a new vault to keep your real files safe
+- Create some files, folders, and tags as test data
+- Clone this repo to the vault
+- Run `npm i` or `yarn` to install dependencies
+- Run `npm run dev` or `yarn run dev` to start compilation in watch mode
+- The [hot-reload](https://github.com/pjeby/hot-reload) plugin can be installed alongside this one to make development faster
 
 ## API Documentation
 
