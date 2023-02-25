@@ -4,7 +4,7 @@ import styled from '@emotion/styled'
 import { FolderIcon, FolderOpenIcon } from 'lucide-react'
 // Modules
 import PluginContext from '../../plugin/PluginContext'
-import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
+import { useAppDispatch, useAppSelector, useTimeout } from '../../plugin/hooks'
 import PlainTextContentEditable from '../../common/PlainTextContentEditable'
 import FolderContextMenu from './FolderContextMenu'
 import { 
@@ -25,6 +25,7 @@ export default function Folder(props: FolderProps) {
   const plugin = React.useContext(PluginContext)
   const dispatch = useAppDispatch()
   const nameRef = React.useRef<HTMLDivElement>(null)
+  const [pendingRename, setPendingRename] = React.useState('')
   const Icon = folder.isExpanded ? FolderOpenIcon : FolderIcon
   const selectChildFoldersByParentPath = React.useMemo(makeSelectChildFoldersByParentPath, [])
   const childFolders = useAppSelector(state => selectChildFoldersByParentPath(state, folder.path))
@@ -72,21 +73,16 @@ export default function Folder(props: FolderProps) {
       }
       // Cancel the rename
       case 'Escape': {
-        console.log('escape...')
+        // A blur on ESC has already fired but we can still cancel the rename
+        setPendingRename('')
+        const nameContainerEl =  nameRef.current!
+        nameContainerEl.textContent = folder.name
         break
-        // At this time, onBlur has fired and started renameFolder, but
-        // folder.name is still the old name
-        // Undo the rename that will complete - not working
-        // TODO: is this non-determinstic? either way, can it be cleaner?
-        // const parentPath = getParentPath(folder)
-        // const newPath = `${parentPath}/${nameRef.current?.textContent}`
-        // plugin.renameFolder(newPath, folder.path)
       }
     }
   }
 
   function onBlur(event: React.FocusEvent) {
-    console.log('blur...')
     clearSelection()
     dispatch(stopAwaitingRenameFolder(folder.path))
     const newName = event.target.textContent || ''
@@ -94,11 +90,16 @@ export default function Folder(props: FolderProps) {
       event.target.textContent = folder.name
     }
     else if (newName !== folder.name) {
-      const parentPath = getParentPath(folder)
-      const newPath = `${parentPath}/${newName}`
-      plugin.renameFolder(folder.path, newPath)
+      setPendingRename(newName)
     }
   }
+
+  // Renaming on a timeout gives onKeyDown === ESC opportunity to abort
+  useTimeout(() => {
+    const parentPath = getParentPath(folder)
+    const newPath = `${parentPath}/${pendingRename}`
+    plugin.renameFolder(folder.path, newPath)
+  }, pendingRename ? 50 : null)
 
   return (
     <StyledFolder {...props}>
