@@ -17,6 +17,7 @@ export interface FileMeta {
 
 export interface SelectableFile extends FileMeta {
   isSelected: boolean
+  isAwaitingRename: boolean
 }
 
 const filesAdapter = createEntityAdapter<SelectableFile>({
@@ -29,25 +30,37 @@ export const filesSlice = createSlice({
   initialState: filesAdapter.getInitialState(),
   reducers: {
     loadFiles(state, action: PayloadAction<FileMeta[]>) {
-      const selectableFiles = action.payload.map(file => ({...file, isSelected: false}))
+      const selectableFiles = action.payload.map(file => ({...file, isSelected: false, isAwaitingRename: false}))
       filesAdapter.setAll(state, selectableFiles)
     },
     addFile: filesAdapter.addOne,
     updateFile: filesAdapter.updateOne,
     removeFile: filesAdapter.removeOne,
+    awaitRenameFile(state, action: PayloadAction<string>) {
+      const path = action.payload
+      const file = state.entities[path]!
+      file.isAwaitingRename = true
+    },
+    stopAwaitingRenameFile(state, action: PayloadAction<string>) {
+      const path = action.payload
+      const file = state.entities[path]!
+      file.isAwaitingRename = false
+    },
     selectFile(state, action: PayloadAction<string>) {
       const path = action.payload
       for (let id of state.ids) {
-        const file = state.entities[id]
-        if (file) {
-          file.isSelected = (id === path)
-        }
+        const file = state.entities[id]!
+        file.isSelected = (id === path)
       }
     }
   },
 })
 
-export const { loadFiles, addFile, updateFile, removeFile, selectFile } = filesSlice.actions
+export const { 
+  loadFiles, addFile, updateFile, removeFile, 
+  awaitRenameFile, stopAwaitingRenameFile,
+  selectFile,
+} = filesSlice.actions
 
 export const filesSelectors = filesAdapter.getSelectors<RootState>(
   state => state.files

@@ -1,7 +1,7 @@
 // Libraries
 import { 
 	App, Plugin, PluginManifest, 
-	Vault, TFile, TFolder, MarkdownView, 
+	Vault, TFile, TFolder, MarkdownView, WorkspaceLeaf, PaneType,
 	CachedMetadata, getAllTags,
 	moment,
 } from 'obsidian'
@@ -59,7 +59,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		this.registerEvent(this.app.vault.on('create', async (f) => {
 			if (f instanceof TFile) {
 				const file = await this.inflatedFileMetaFromTFile(f)
-				store.dispatch(addFile({ ...file, isSelected: false }))
+				store.dispatch(addFile({ ...file, isSelected: false, isAwaitingRename: false }))
 			}
 			else if (f instanceof TFolder) {
 				const folder = this.folderMetaFromTFolder(f)
@@ -102,6 +102,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 					const container = markdownView.containerEl
 					let titleContainer = container.querySelector('div[contenteditable="true"].inline-title') as HTMLElement
 					// It's possible the user has elected to hide inline titles
+					// For future reference, that setting exists in app.vault.config
 					if (!titleContainer || getComputedStyle(titleContainer).display === 'none') {
 						titleContainer = container.querySelector('div[contenteditable="true"].view-header-title') as HTMLElement
 					}
@@ -224,8 +225,9 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		}
 	}
 
-	async createFile(parentPath: string = '') {
-		const name = `${moment().format('YYYY-MM-DD HH-mm-ss')}.md`
+	// FUTURE: Make sure this works with .canvas - it almost does now
+	async createFile(parentPath: string = '', type='md') {
+		const name = `${moment().format('YYYY-MM-DD HH-mm-ss')}.${type}`
 		let path = parentPath
 			? parentPath
 			: this.app.workspace.getActiveFile()?.parent.path
@@ -260,12 +262,18 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		this.app.vault.delete(f, true)
 	}
 
-	openFile(f: TFile | FileMeta, renameOnOpen: boolean = false) {
+	openFile(f: TFile | FileMeta, renameOnOpen: boolean = false, pane?: PaneType | boolean) {
 		if ('preview' in f) {
 			// Convert from FileMeta to TFile
 			f = this.app.vault.getAbstractFileByPath(f.path) as TFile
 		}
-		const fileLeaf = this.app.workspace.getLeaf()
+		let fileLeaf: WorkspaceLeaf
+		if (pane) {
+			fileLeaf = this.app.workspace.getLeaf(pane)
+		}
+		else {
+			fileLeaf = this.app.workspace.getLeaf()
+		}
 		if (renameOnOpen) {
 			// on 'file-open' the title will be selected for renaming
 			// and this.renameNextFileOpened will be cleared

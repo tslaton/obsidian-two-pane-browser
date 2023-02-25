@@ -21,19 +21,41 @@ export default function FolderContextMenu(folder: FolderMeta, plugin: TwoPaneBro
       plugin.createFolder(folder.path)
     })  
   )
-  // Set as attachment folder
+  menu.addItem(item => item
+    .setTitle('Set as attachment folder')
+    .onClick(() => {
+      // @ts-ignore
+      plugin.app.setAttachmentFolder(folder)
+    })
+  )
   menu.addItem(item => item
     .setTitle('Rename')
     .onClick(() => {
       store.dispatch(awaitRenameFolder(folder.path))
     })  
   )
-  // Move folder to...
-  // menu.addSeparator()
-  // Reveal in Finder
-  // menu.addSeparator()
-  // New canvas
+  // menu.addItem(item => item
+  //   .setTitle('Move folder to...')
+  //   .onClick(() => {
+  //     console.log(plugin.app)
+  //   })
+  // )
   menu.addSeparator()
+  menu.addItem(item => item
+    .setTitle('Reveal in system browser')
+    .onClick(() => {
+      // @ts-ignore
+      plugin.app.showInFolder(folder.path)
+    })
+  )
+  menu.addSeparator()
+  // menu.addItem(item => item
+  //   .setTitle('New canvas')
+  //   .onClick(() => {
+  //     plugin.createFile(folder.path, 'canvas')
+  //   })  
+  // )
+  // menu.addSeparator()
   menu.addItem(item => item
     .setTitle('Delete')
     .onClick(() => {

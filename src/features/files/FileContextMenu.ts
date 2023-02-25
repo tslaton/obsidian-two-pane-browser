@@ -2,28 +2,68 @@
 import { Menu } from 'obsidian'
 // Modules
 import type TwoPaneBrowserPlugin from '../../main'
-import { FileMeta } from './filesSlice'
+import store from '../../plugin/store'
+import { FileMeta, awaitRenameFile } from './filesSlice'
 
 export default function FileContextMenu(file: FileMeta, plugin: TwoPaneBrowserPlugin) {
   // Ref: https://marcus.se.net/obsidian-plugin-docs/user-interface/context-menus 
   const menu = new Menu()
 
-  // Open in new tab
-  // Open to the right
-  // Open in new window
-  // menu.addSeparator()
-  // Rename
+  menu.addItem(item => item
+    .setTitle('Open in new tab')
+    .onClick(() => {
+      plugin.openFile(file, false, 'tab')
+    })  
+  )
+  menu.addItem(item => item
+    .setTitle('Open to the right')
+    .onClick(() => {
+      plugin.openFile(file, false, 'split')
+    })  
+  )
+  menu.addItem(item => item
+    .setTitle('Open in new window')
+    .onClick(() => {
+      plugin.openFile(file, false, 'window')
+    })  
+  )
+  menu.addSeparator()
+  menu.addItem(item => item
+    .setTitle('Rename')
+    .onClick(() => {
+      throw new Error('Need to implement in FilePreview.tsx')
+      // store.dispatch(awaitRenameFile(file.path))
+    })  
+  )
   // Make a copy
   // Move file to...
   // Star
   // Merge entire file with...
-  // menu.addSeparator()
-  // Open in default app
-  // Reveal in Finder
-  // menu.addSeparator()
-  // Copy Obsidian URL
-  // menu.addSeparator()
-
+  menu.addSeparator()
+  menu.addItem(item => item
+    .setTitle('Open in default app')
+    .onClick(() => {
+      // @ts-ignore
+      plugin.app.openWithDefaultApp(file.path)
+    })  
+  )
+  menu.addItem(item => item
+    .setTitle('Reveal in system browser')
+    .onClick(() => {
+      // @ts-ignore
+      plugin.app.showInFolder(file.path)
+    })
+  )
+  menu.addSeparator()
+  menu.addItem(item => item
+    .setTitle('Copy Obsidian URL')
+    .onClick(() => {
+      const vault = plugin.app.vault.getName()
+      const uri = `obsidian://vault/${vault}/${file.path}`
+      navigator.clipboard.writeText(uri)
+    })  
+  )
+  menu.addSeparator()
   menu.addItem(item => item
     .setTitle('Delete')
     .onClick(() => {
