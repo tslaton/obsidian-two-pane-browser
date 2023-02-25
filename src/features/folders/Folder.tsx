@@ -5,6 +5,7 @@ import { FolderIcon, FolderOpenIcon } from 'lucide-react'
 // Modules
 import PluginContext from '../../plugin/PluginContext'
 import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
+import PlainTextContentEditable from '../../common/PlainTextContentEditable'
 import FolderContextMenu from './FolderContextMenu'
 import { 
   FolderMeta, makeSelectChildFoldersByParentPath, 
@@ -54,29 +55,49 @@ export default function Folder(props: FolderProps) {
     menu.showAtMouseEvent(event.nativeEvent)
   }
 
+  // Only enable clicks when folder.isAwaitingRename
+  // During this time, stop propgation to flex-folder-wrapper to avoid selecting 
+  function onClick(event: React.MouseEvent) {
+    event.stopPropagation()
+  }
+
+  // Note: fires *after* blur when escape is pressed
   function onKeyDown(event: React.KeyboardEvent) {
-    console.log('onKeyDown')
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      nameRef.current?.blur()
+    switch(event.key) {
+      // Do a rename
+      case 'Enter': {
+        event.preventDefault()
+        nameRef.current?.blur()
+        break
+      }
+      // Cancel the rename
+      case 'Escape': {
+        console.log('escape...')
+        break
+        // At this time, onBlur has fired and started renameFolder, but
+        // folder.name is still the old name
+        // Undo the rename that will complete - not working
+        // TODO: is this non-determinstic? either way, can it be cleaner?
+        // const parentPath = getParentPath(folder)
+        // const newPath = `${parentPath}/${nameRef.current?.textContent}`
+        // plugin.renameFolder(newPath, folder.path)
+      }
     }
   }
 
-  function onInput() {
-    console.log('onInput: ', folder.path)
-    dispatch(stopAwaitingRenameFolder(folder.path))
-  }
-
   function onBlur(event: React.FocusEvent) {
+    console.log('blur...')
     clearSelection()
     dispatch(stopAwaitingRenameFolder(folder.path))
     const newName = event.target.textContent || ''
-    if (newName && newName !== folder.name) {
+    if (!newName) {
+      event.target.textContent = folder.name
+    }
+    else if (newName !== folder.name) {
       const parentPath = getParentPath(folder)
       const newPath = `${parentPath}/${newName}`
       plugin.renameFolder(folder.path, newPath)
     }
-    console.log('onBlur: ', newName)
   }
 
   return (
@@ -85,17 +106,16 @@ export default function Folder(props: FolderProps) {
         <div className="clickable-icon" onClick={toggleIsExpanded}>
           <Icon size={18} />
         </div>
-        <div 
-          className="folder-name" 
-          contentEditable={"plaintext-only" as any} 
-          suppressContentEditableWarning={true}
+        <PlainTextContentEditable
+          className="folder-name"
           ref={nameRef}
+          disableClicks={!folder.isAwaitingRename}
+          onClick={onClick}
           onKeyDown={onKeyDown}
-          onInput={onInput}
           onBlur={onBlur}
         >
           {folder.name}
-        </div>
+        </PlainTextContentEditable>
       </div>
       {folder.isExpanded && childFolders.map(childFolder =>
         <Folder key={childFolder.path} folder={childFolder} level={level + 1} />
@@ -116,10 +136,11 @@ const StyledFolder = styled.div<FolderProps>`
     &:hover {
       background-color: var(--background-modifier-hover);
     }
+    pointer-events: ${props => props.folder.isAwaitingRename ? 'none' : 'initial' };
   }
 
   .folder-name {
     line-height: 24px;
-    pointer-events: none;
+    flex: 1;
   }
 `
