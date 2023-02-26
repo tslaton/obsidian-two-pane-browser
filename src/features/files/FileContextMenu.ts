@@ -59,7 +59,7 @@ export default function FileContextMenu(file: FileMeta, plugin: TwoPaneBrowserPl
     .setTitle('Copy Obsidian URL')
     .onClick(() => {
       const vault = plugin.app.vault.getName()
-      const uri = `obsidian://vault/${vault}/${file.path}`
+      const uri = `obsidian://open?vault=${encodeURI(vault)}&file=${encodeURI(file.path)}`
       navigator.clipboard.writeText(uri)
     })  
   )
