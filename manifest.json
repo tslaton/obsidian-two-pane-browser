@@ -1,6 +1,6 @@
 {
 	"id": "obsidian-two-pane-browser",
-	"name": "Obsidian Two-Pane Browser",
+	"name": "Two-Pane Browser",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Implements a two-pane alternative to file and tag browsing.",
