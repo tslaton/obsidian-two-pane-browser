@@ -31,8 +31,7 @@ export default function FileContextMenu(file: FileMeta, plugin: TwoPaneBrowserPl
   menu.addItem(item => item
     .setTitle('Rename')
     .onClick(() => {
-      throw new Error('Need to implement in FilePreview.tsx')
-      // store.dispatch(awaitRenameFile(file.path))
+      store.dispatch(awaitRenameFile(file.path))
     })  
   )
   // Make a copy

@@ -251,7 +251,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		store.dispatch(awaitRenameFolder(newFolderPath))
 	}
 
-	async renameFolder(path: string, newPath: string) {
+	async renameFileOrFolder(path: string, newPath: string) {
 		const f = this.app.vault.getAbstractFileByPath(path)!
 		this.app.vault.rename(f, newPath)
 	}

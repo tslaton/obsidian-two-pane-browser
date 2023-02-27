@@ -4,9 +4,9 @@ import * as React from 'react'
 import styled from '@emotion/styled'
 // Modules
 import PluginContext from '../../plugin/PluginContext'
-import { useAppDispatch } from '../../plugin/hooks'
+import EditableName from '../../common/EditableName'
 import FileContextMenu from './FileContextMenu'
-import { SelectableFile } from './filesSlice'
+import { SelectableFile, stopAwaitingRenameFile } from './filesSlice'
 import Tag from '../tags/Tag'
 
 interface FilePreviewProps {
@@ -15,8 +15,8 @@ interface FilePreviewProps {
 
 export default function FilePreview(props: FilePreviewProps) {
   const { file } = props
-  const { name, stat, preview, tags } = file
-  const dispatch = useAppDispatch()
+  const { name, path, stat, preview, tags, isAwaitingRename } = file
+  const basename = name.replace(/\.[^/.]+$/, '')
   const plugin = React.useContext(PluginContext)
 
   function openFile() {
@@ -31,9 +31,14 @@ export default function FilePreview(props: FilePreviewProps) {
 
   return (
     <StyledFilePreview {...props} onClick={openFile} onContextMenu={onContextMenu}>
-      <div className="file-name">
-        {name.replace(/\.[^/.]+$/, '')}
-      </div>
+      <EditableName 
+        className="file-name"
+        name={basename}
+        path={path}
+        extension={'.md'}
+        isAwaitingRename={isAwaitingRename}
+        onBlurAction={stopAwaitingRenameFile(path)}
+      />
       <div>
         {preview}
       </div>
