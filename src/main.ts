@@ -241,7 +241,6 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		this.openFile(createdFile, true)
 	}
 
-	// TODO: add create folder button to create new at root
 	async createFolder(parentPath: string = '') {
 		const name = moment().format('YYYY-MM-DD HH-mm-ss')
 		const newFolderPath = parentPath
