@@ -7,12 +7,15 @@ import { getParentPath, getDescendantPaths, getChildPaths } from '../../utils'
 export interface FolderMeta {
   name: string
   path: string
+}
+
+export interface InteractiveFolder extends FolderMeta {
   isExpanded: boolean
-  isSelected: boolean
+  isSelected: boolean // === isActive for folders (multiple at once)
   isAwaitingRename: boolean
 }
 
-const foldersAdapter = createEntityAdapter<FolderMeta>({
+const foldersAdapter = createEntityAdapter<InteractiveFolder>({
   selectId: folder => folder.path,
   sortComparer: (a, b) => a.name.localeCompare(b.name),
 })
@@ -22,7 +25,10 @@ export const foldersSlice = createSlice({
   initialState: foldersAdapter.getInitialState(),
   reducers: {
     loadFolders(state, action: PayloadAction<FolderMeta[]>) {
-      foldersAdapter.setAll(state, action.payload)
+      const interactiveFolders = action.payload.map(folder => 
+        ({...folder, isExpanded: false, isSelected: false, isAwaitingRename: false})
+      )
+      foldersAdapter.setAll(state, interactiveFolders)
     },
     addFolder: foldersAdapter.addOne,
     updateFolder: foldersAdapter.updateOne,
@@ -77,7 +83,7 @@ export const foldersSlice = createSlice({
       }
     },
     deselectAllFolders(state) {
-      const folders = Object.values(state.entities) as FolderMeta[]
+      const folders = Object.values(state.entities) as InteractiveFolder[]
       for (let folder of folders) {
         folder.isSelected = false
       }

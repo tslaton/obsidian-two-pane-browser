@@ -10,7 +10,7 @@ import store from './plugin/store'
 import TwoPaneBrowserView, { TWO_PANE_BROWSER_VIEW } from './plugin/view'
 import TwoPaneBrowserSettingTab from './plugin/settingsTab'
 import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, loadSettings } from './features/settings/settingsSlice'
-import { FileMeta, loadFiles, addFile, updateFile, removeFile, selectFile } from './features/files/filesSlice'
+import { FileMeta, loadFiles, addFile, updateFile, removeFile, activateFile } from './features/files/filesSlice'
 import { FolderMeta, loadFolders, addFolder, updateFolder, removeFolder, awaitRenameFolder } from './features/folders/foldersSlice'
 import { getParentPath, selectElementContent } from './utils'
 
@@ -59,11 +59,21 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		this.registerEvent(this.app.vault.on('create', async (f) => {
 			if (f instanceof TFile) {
 				const file = await this.inflatedFileMetaFromTFile(f)
-				store.dispatch(addFile({ ...file, isSelected: false, isAwaitingRename: false }))
+				store.dispatch(addFile({ 
+					...file,
+					isActive: false,
+					isSelected: false, 
+					isAwaitingRename: false,
+				}))
 			}
 			else if (f instanceof TFolder) {
 				const folder = this.folderMetaFromTFolder(f)
-				store.dispatch(addFolder(folder))
+				store.dispatch(addFolder({
+					...folder,
+					isExpanded: false,
+					isSelected: false,
+					isAwaitingRename: false,
+				}))
 			}
 		}))
 
@@ -110,7 +120,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 					this.renameNextFileOpened = false
 				}
 				// TODO: fancier dispatch for folder tree context and/or isActive vs. isSelected?
-				store.dispatch(selectFile(file.path))
+				store.dispatch(activateFile(file.path))
 			}
 		}))
 
@@ -189,9 +199,6 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		return {
 			name: folder.name,
 			path: folder.path,
-			isExpanded: false,
-			isSelected: false,
-			isAwaitingRename: false,
 		}
 	}
 

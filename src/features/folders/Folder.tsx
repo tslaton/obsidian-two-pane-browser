@@ -8,14 +8,14 @@ import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
 import EditableName from '../../common/EditableName'
 import FolderContextMenu from './FolderContextMenu'
 import { 
-  FolderMeta, makeSelectChildFoldersByParentPath, 
+  InteractiveFolder, makeSelectChildFoldersByParentPath, 
   toggleFolderExpansion, toggleFolderSelection, selectFolder,
   stopAwaitingRenameFolder,
 } from './foldersSlice'
-import { deselectAllFilters } from '../filters/filtersSlice'
+import { deactivateAllFilters } from '../filters/filtersSlice'
 
 interface FolderProps {
-  folder: FolderMeta
+  folder: InteractiveFolder
   level: number
 }
 
@@ -39,7 +39,7 @@ export default function Folder(props: FolderProps) {
     else {
       dispatch(selectFolder(folder.path))
     }
-    dispatch(deselectAllFilters())
+    dispatch(deactivateAllFilters())
   }
 
   function onContextMenu(event: React.MouseEvent) {
@@ -49,7 +49,11 @@ export default function Folder(props: FolderProps) {
 
   return (
     <StyledFolder {...props}>
-      <div className="flex-folder-wrapper" onClick={toggleIsSelected} onContextMenu={onContextMenu}>
+      <div 
+        className={`flex-folder-wrapper nav-item ${folder.isSelected ? 'is-active' : ''}`} 
+        onClick={toggleIsSelected} 
+        onContextMenu={onContextMenu}
+      >
         <div className="clickable-icon" onClick={toggleIsExpanded}>
           <Icon size={18} />
         </div>
@@ -76,10 +80,6 @@ const StyledFolder = styled.div<FolderProps>`
     flex-direction: horizontal;
     padding: 10px;
     border-radius: 4px;
-    background-color: ${props => props.folder.isSelected ? 'var(--background-modifier-hover)' : 'inherit' };
-    &:hover {
-      background-color: var(--background-modifier-hover);
-    }
     pointer-events: ${props => props.folder.isAwaitingRename ? 'none' : 'initial' };
   }
 

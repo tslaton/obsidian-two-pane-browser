@@ -4,7 +4,7 @@ import { createSelector, createSlice, createEntityAdapter, PayloadAction } from 
 // Modules
 import type { RootState } from '../../plugin/store'
 import { selectPathsInScope } from '../folders/foldersSlice'
-import { selectSelectedFilter } from '../filters/filtersSlice'
+import { selectActiveFilter } from '../filters/filtersSlice'
 import { getParentPath } from '../../utils'
 
 export interface FileMeta {
@@ -15,12 +15,13 @@ export interface FileMeta {
   tags: string[]
 }
 
-export interface SelectableFile extends FileMeta {
+export interface InteractiveFile extends FileMeta {
+  isActive: boolean
   isSelected: boolean
   isAwaitingRename: boolean
 }
 
-const filesAdapter = createEntityAdapter<SelectableFile>({
+const filesAdapter = createEntityAdapter<InteractiveFile>({
   selectId: file => file.path,
   sortComparer: (a, b) => a.name.localeCompare(b.name),
 })
@@ -30,8 +31,10 @@ export const filesSlice = createSlice({
   initialState: filesAdapter.getInitialState(),
   reducers: {
     loadFiles(state, action: PayloadAction<FileMeta[]>) {
-      const selectableFiles = action.payload.map(file => ({...file, isSelected: false, isAwaitingRename: false}))
-      filesAdapter.setAll(state, selectableFiles)
+      const interactiveFiles = action.payload.map(file => 
+        ({...file, isActive: false, isSelected: false, isAwaitingRename: false})
+      )
+      filesAdapter.setAll(state, interactiveFiles)
     },
     addFile: filesAdapter.addOne,
     updateFile: filesAdapter.updateOne,
@@ -46,20 +49,27 @@ export const filesSlice = createSlice({
       const file = state.entities[path]!
       file.isAwaitingRename = false
     },
-    selectFile(state, action: PayloadAction<string>) {
+    activateFile(state, action: PayloadAction<string>) {
       const path = action.payload
       for (let id of state.ids) {
         const file = state.entities[id]!
-        file.isSelected = (id === path)
+        file.isActive = (id === path)
+        file.isSelected = false
       }
-    }
+    },
+    toggleFileSelection(state, action: PayloadAction<string>) {
+      const path = action.payload
+      const file = state.entities[path]!
+      file.isSelected = !file.isSelected
+      file.isActive = false
+    },
   },
 })
 
 export const { 
   loadFiles, addFile, updateFile, removeFile, 
   awaitRenameFile, stopAwaitingRenameFile,
-  selectFile,
+  activateFile, toggleFileSelection,
 } = filesSlice.actions
 
 export const filesSelectors = filesAdapter.getSelectors<RootState>(
@@ -68,20 +78,20 @@ export const filesSelectors = filesAdapter.getSelectors<RootState>(
 
 export const selectFilesInScope = createSelector(
   filesSelectors.selectAll,
-  selectSelectedFilter,
+  selectActiveFilter,
   selectPathsInScope,
-  (files, selectedFilter, pathsInScope) => {
-    if (!selectedFilter) {
+  (files, activeFilter, pathsInScope) => {
+    if (!activeFilter) {
       return files.filter(file => pathsInScope.has(getParentPath(file)))
     }
     else {
-      if (selectedFilter.id === 'all') {
+      if (activeFilter.id === 'all') {
         return files
       }
-      else if (selectedFilter.id === 'inbox') {
+      else if (activeFilter.id === 'inbox') {
         return files.filter(file => getParentPath(file) === '')
       }
-      else if (selectedFilter.id === 'recents') {
+      else if (activeFilter.id === 'recents') {
         return files.filter(file => moment.duration(moment.now() - file.stat.mtime) <= moment.duration(7, 'days'))
       }
       else {
