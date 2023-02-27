@@ -253,7 +253,13 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 
 	async renameFileOrFolder(path: string, newPath: string) {
 		const f = this.app.vault.getAbstractFileByPath(path)!
-		this.app.vault.rename(f, newPath)
+		// Rename and update all links to file according to user preferences
+		if (f instanceof TFile) {
+			this.app.fileManager.renameFile(f, newPath)
+		}
+		else {
+			this.app.vault.rename(f, newPath)
+		}
 	}
 
 	openFile(f: TFile | FileMeta, renameOnOpen: boolean = false, pane?: PaneType | boolean) {
