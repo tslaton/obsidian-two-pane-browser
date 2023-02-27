@@ -37,7 +37,7 @@ export default function FileContextMenu(file: FileMeta, plugin: TwoPaneBrowserPl
   // Make a copy
   // Move file to...
   // Star
-  // Merge entire file with...
+  // Merge entire file with... (see app.fileManager.mergeFile)
   menu.addSeparator()
   menu.addItem(item => item
     .setTitle('Open in default app')
@@ -66,7 +66,9 @@ export default function FileContextMenu(file: FileMeta, plugin: TwoPaneBrowserPl
   menu.addItem(item => item
     .setTitle('Delete')
     .onClick(() => {
-      plugin.deleteFileOrFolder(file.path)
+      const f = plugin.app.vault.getAbstractFileByPath(file.path)
+      // @ts-ignore
+      plugin.app.fileManager.promptForDeletion(f)
     }) 
   )
 

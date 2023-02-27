@@ -59,7 +59,9 @@ export default function FolderContextMenu(folder: FolderMeta, plugin: TwoPaneBro
   menu.addItem(item => item
     .setTitle('Delete')
     .onClick(() => {
-      plugin.deleteFileOrFolder(folder.path)
+      const f = plugin.app.vault.getAbstractFileByPath(folder.path)
+      // @ts-ignore
+      plugin.app.fileManager.promptForDeletion(f)
     }) 
   )
 

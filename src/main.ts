@@ -256,12 +256,6 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		this.app.vault.rename(f, newPath)
 	}
 
-	// TODO: show a warning for attempt to delete non-empty folder
-	deleteFileOrFolder(path: string) {
-		const f = this.app.vault.getAbstractFileByPath(path)!
-		this.app.vault.delete(f, true)
-	}
-
 	openFile(f: TFile | FileMeta, renameOnOpen: boolean = false, pane?: PaneType | boolean) {
 		if ('preview' in f) {
 			// Convert from FileMeta to TFile
