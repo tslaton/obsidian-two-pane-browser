@@ -3,31 +3,59 @@ import { moment } from 'obsidian'
 import * as React from 'react'
 import styled from '@emotion/styled'
 // Modules
-import { SelectableFile, selectFile } from './filesSlice'
-import { useAppDispatch } from '../../plugin/hooks'
 import PluginContext from '../../plugin/PluginContext'
+import { useAppDispatch } from '../../plugin/hooks'
+import EditableName from '../../common/EditableName'
+import FileContextMenu from './FileContextMenu'
+import { InteractiveFile, toggleFileSelection, stopAwaitingRenameFile } from './filesSlice'
 import Tag from '../tags/Tag'
 
 interface FilePreviewProps {
-  file: SelectableFile
+  file: InteractiveFile
 }
 
 export default function FilePreview(props: FilePreviewProps) {
   const { file } = props
-  const { name, stat, preview, tags } = file
-  const dispatch = useAppDispatch()
+  const { name, path, stat, preview, tags, isAwaitingRename } = file
+  const basename = name.replace(/\.[^/.]+$/, '')
   const plugin = React.useContext(PluginContext)
+  const dispatch = useAppDispatch()
 
-  function openFile() {
-    dispatch(selectFile(file.path))
-    plugin.openFile(file)
+  function onClick(event: React.MouseEvent) {
+    if (event.metaKey) {
+      dispatch(toggleFileSelection(file.path))
+    }
+    else {
+      // plugin will dispatch activateFile(file.path) after it is opened
+      plugin.openFile(file)
+    }
   }
 
+  function onContextMenu(event: React.MouseEvent) {
+    const menu = FileContextMenu(file, plugin)
+    menu.showAtMouseEvent(event.nativeEvent)
+  }
+
+  const statusClasses = [
+    file.isSelected ? ' is-selected' : '', 
+    file.isActive ? 'is-active' : ''
+  ].join(' ')
+
   return (
-    <StyledFilePreview {...props} onClick={openFile}>
-      <div className="file-name">
-        {name.replace(/\.[^/.]+$/, '')}
-      </div>
+    <StyledFilePreview 
+      className={`nav-item ${statusClasses}`} 
+      onClick={onClick} 
+      onContextMenu={onContextMenu} 
+      {...props}
+    >
+      <EditableName 
+        className="file-name"
+        name={basename}
+        path={path}
+        extension={'.md'}
+        isAwaitingRename={isAwaitingRename}
+        onBlurAction={stopAwaitingRenameFile(path)}
+      />
       <div>
         {preview}
       </div>
@@ -46,10 +74,6 @@ export default function FilePreview(props: FilePreviewProps) {
 const StyledFilePreview = styled.div<FilePreviewProps>`
   padding: 10px;
   border-radius: 4px;
-  background-color: ${props => props.file.isSelected ? 'var(--background-modifier-hover)' : 'inherit'};
-  &:hover {
-    background-color: var(--background-modifier-hover);
-  }
 
   .file-name {
     font-size: 16px;
@@ -67,7 +91,7 @@ const StyledFilePreview = styled.div<FilePreviewProps>`
   }
 
   .last-modified {
-    color: var(--text-muted);
+    color: var(--text-faint);
     margin-right: 4px;
   }
 `

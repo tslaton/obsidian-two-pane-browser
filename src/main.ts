@@ -1,25 +1,26 @@
 // Libraries
 import { 
 	App, Plugin, PluginManifest, 
-	Vault, TAbstractFile, TFile, TFolder, 
+	Vault, TFile, TFolder, MarkdownView, WorkspaceLeaf, PaneType,
 	CachedMetadata, getAllTags,
+	moment,
 } from 'obsidian'
 // Modules
 import store from './plugin/store'
 import TwoPaneBrowserView, { TWO_PANE_BROWSER_VIEW } from './plugin/view'
 import TwoPaneBrowserSettingTab from './plugin/settingsTab'
 import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, loadSettings } from './features/settings/settingsSlice'
-import { FileMeta, loadFiles, addFile, updateFile, removeFile } from './features/files/filesSlice'
-import { FolderMeta, loadFolders, addFolder, updateFolder, removeFolder } from './features/folders/foldersSlice'
-import { getParentPath } from './utils'
+import { FileMeta, loadFiles, addFile, updateFile, removeFile, activateFile } from './features/files/filesSlice'
+import { FolderMeta, loadFolders, addFolder, updateFolder, removeFolder, awaitRenameFolder } from './features/folders/foldersSlice'
+import { getParentPath, selectElementContent } from './utils'
 
 export default class TwoPaneBrowserPlugin extends Plugin {
+	// Used to avoid a timeout waiting for the beginning of a new file 
+	// to be selected on 'file-open' before selecting the title for renaming
+	renameNextFileOpened: boolean
+
 	constructor(app: App, manifest: PluginManifest) {
 		super(app, manifest)
-		this.createFileOrFolder = this.createFileOrFolder.bind(this)
-		this.deleteFileOrFolder = this.deleteFileOrFolder.bind(this)
-		this.renameFileOrFolder = this.renameFileOrFolder.bind(this)
-		this.metadataCacheChanged = this.metadataCacheChanged.bind(this)
 	}
 
 	async activateView() {
@@ -54,12 +55,74 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new TwoPaneBrowserSettingTab(this.app, this))
 
-		// Register handlers for vault updates
-		this.app.vault.on('create', this.createFileOrFolder)
-		this.app.vault.on('delete', this.deleteFileOrFolder)
-		this.app.vault.on('rename', this.renameFileOrFolder)
-		// Register handlers for metadata cache updates
-		this.app.metadataCache.on('changed', this.metadataCacheChanged)
+		// Watch the filesystem for changes via vault
+		this.registerEvent(this.app.vault.on('create', async (f) => {
+			if (f instanceof TFile) {
+				const file = await this.inflatedFileMetaFromTFile(f)
+				store.dispatch(addFile({ 
+					...file,
+					isActive: false,
+					isSelected: false, 
+					isAwaitingRename: false,
+				}))
+			}
+			else if (f instanceof TFolder) {
+				const folder = this.folderMetaFromTFolder(f)
+				store.dispatch(addFolder({
+					...folder,
+					isExpanded: false,
+					isSelected: false,
+					isAwaitingRename: false,
+				}))
+			}
+		}))
+
+		this.registerEvent(this.app.vault.on('delete', (f) => {
+			if (f instanceof TFile) {
+				store.dispatch(removeFile(f.path))
+			}
+			else if (f instanceof TFolder) {
+				store.dispatch(removeFolder(f.path))
+			}
+		}))
+
+		this.registerEvent(this.app.vault.on('rename', async (f, oldPath) => {
+			if (f instanceof TFile) {
+				const file = await this.inflatedFileMetaFromTFile(f)
+				store.dispatch(updateFile({ id: oldPath, changes: file }))
+			}
+			else if (f instanceof TFolder) {
+				const folder = this.folderMetaFromTFolder(f)
+				store.dispatch(updateFolder({ id: oldPath, changes: folder }))
+			}
+		}))
+
+		// Watch metadataCache for changes
+		this.registerEvent(this.app.metadataCache.on('changed', async (f, data, cache) => {
+			const file = await this.inflatedFileMetaFromTFile(f, cache)
+			store.dispatch(updateFile({id: file.path, changes: file }))
+		}))
+
+		// Watch workspace for changes
+		this.registerEvent(this.app.workspace.on('file-open', (file) => {
+			// Event fires when a file tab is closed, too (with file === null)
+			if (file) {
+				if (this.renameNextFileOpened) {
+					const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView)!
+					const container = markdownView.containerEl
+					let titleContainer = container.querySelector('div[contenteditable="true"].inline-title') as HTMLElement
+					// It's possible the user has elected to hide inline titles
+					// For future reference, that setting exists in app.vault.config
+					if (!titleContainer || getComputedStyle(titleContainer).display === 'none') {
+						titleContainer = container.querySelector('div[contenteditable="true"].view-header-title') as HTMLElement
+					}
+					selectElementContent(titleContainer)
+					this.renameNextFileOpened = false
+				}
+				// TODO: fancier dispatch for folder tree context and/or isActive vs. isSelected?
+				store.dispatch(activateFile(file.path))
+			}
+		}))
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
 		// this.registerInterval(window.setInterval(() => console.log(store.getState()), 10 * 1000))
@@ -67,10 +130,6 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 
 	onunload() {
 		this.app.workspace.detachLeavesOfType(TWO_PANE_BROWSER_VIEW)
-		this.app.vault.off('create', this.createFileOrFolder)
-		this.app.vault.off('delete', this.deleteFileOrFolder)
-		this.app.vault.off('rename', this.renameFileOrFolder)
-		this.app.metadataCache.off('changed', this.metadataCacheChanged)
 	}
 
 	async loadSettings() {
@@ -140,8 +199,6 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		return {
 			name: folder.name,
 			path: folder.path,
-			isExpanded: false,
-			isSelected: false,
 		}
 	}
 
@@ -175,45 +232,59 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		}
 	}
 
-	async createFileOrFolder(f: TAbstractFile) {
+	// FUTURE: Make sure this works with .canvas - it almost does now
+	async createFile(parentPath: string = '', type='md') {
+		const name = `${moment().format('YYYY-MM-DD HH-mm-ss')}.${type}`
+		let path = parentPath
+			? parentPath
+			: this.app.workspace.getActiveFile()?.parent.path
+		let createdFile: TFile
+		if (path) {
+			createdFile = await this.app.vault.create(`${path}/${name}`, '')
+		}
+		else {
+			createdFile = await this.app.vault.create(name, '')
+		}
+		this.openFile(createdFile, true)
+	}
+
+	async createFolder(parentPath: string = '') {
+		const name = moment().format('YYYY-MM-DD HH-mm-ss')
+		const newFolderPath = parentPath
+			? `${parentPath}/${name}`
+			: name
+		await this.app.vault.createFolder(newFolderPath)
+		store.dispatch(awaitRenameFolder(newFolderPath))
+	}
+
+	async renameFileOrFolder(path: string, newPath: string) {
+		const f = this.app.vault.getAbstractFileByPath(path)!
+		// Rename and update all links to file according to user preferences
 		if (f instanceof TFile) {
-			const file = await this.inflatedFileMetaFromTFile(f)
-			store.dispatch(addFile({ ...file, isSelected: false }))
+			this.app.fileManager.renameFile(f, newPath)
 		}
-		else if (f instanceof TFolder) {
-			const folder = this.folderMetaFromTFolder(f)
-			store.dispatch(addFolder(folder))
+		else {
+			this.app.vault.rename(f, newPath)
 		}
 	}
 
-	deleteFileOrFolder(f: TAbstractFile) {
-		if (f instanceof TFile) {
-			store.dispatch(removeFile(f.path))
+	openFile(f: TFile | FileMeta, renameOnOpen: boolean = false, pane?: PaneType | boolean) {
+		if ('preview' in f) {
+			// Convert from FileMeta to TFile
+			f = this.app.vault.getAbstractFileByPath(f.path) as TFile
 		}
-		else if (f instanceof TFolder) {
-			store.dispatch(removeFolder(f.path))
+		let fileLeaf: WorkspaceLeaf
+		if (pane) {
+			fileLeaf = this.app.workspace.getLeaf(pane)
 		}
-	}
-
-	async renameFileOrFolder(f: TAbstractFile, oldPath: string) {
-		if (f instanceof TFile) {
-			const file = await this.inflatedFileMetaFromTFile(f)
-			store.dispatch(updateFile({ id: oldPath, changes: file }))
+		else {
+			fileLeaf = this.app.workspace.getLeaf()
 		}
-		else if (f instanceof TFolder) {
-			const folder = this.folderMetaFromTFolder(f)
-			store.dispatch(updateFolder({ id: oldPath, changes: folder }))
+		if (renameOnOpen) {
+			// on 'file-open' the title will be selected for renaming
+			// and this.renameNextFileOpened will be cleared
+			this.renameNextFileOpened = true
 		}
-	}
-
-	async metadataCacheChanged(f: TFile, data: string, cache: CachedMetadata) {
-		const file = await this.inflatedFileMetaFromTFile(f, cache)
-		store.dispatch(updateFile({id: file.path, changes: file }))
-	}
-
-	openFile(file: FileMeta) {
-		const f = this.app.vault.getAbstractFileByPath(file.path) as TFile
-		const fileLeaf = this.app.workspace.getLeaf()
 		fileLeaf.openFile(f)
 	}
 }

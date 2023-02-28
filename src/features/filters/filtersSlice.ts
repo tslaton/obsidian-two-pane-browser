@@ -6,38 +6,38 @@ import type { RootState } from '../../plugin/store'
 export interface FilterMeta {
   id: string
   name: string
-  isSelected: boolean
+  isActive: boolean
 }
 
 export const filtersSlice = createSlice({
   name: 'filters',
   initialState: [
-    { id: 'all', name: 'All', isSelected: true },
-    { id: 'inbox', name: 'Inbox', isSelected: false },
-    { id: 'recents', name: 'Last 7 days', isSelected: false },
+    { id: 'all', name: 'All', isActive: true },
+    { id: 'inbox', name: 'Inbox', isActive: false },
+    { id: 'recents', name: 'Last 7 days', isActive: false },
   ] as FilterMeta[],
   reducers: {
-    selectFilter(state, action: PayloadAction<string>) {
+    activateFilter(state, action: PayloadAction<string>) {
       const id = action.payload
       for (let filter of state) {
-        filter.isSelected = filter.id === id
+        filter.isActive = filter.id === id
       }
     },
-    deselectAllFilters(state) {
+    deactivateAllFilters(state) {
       for (let filter of state) {
-        filter.isSelected = false
+        filter.isActive = false
       }
     },
   },
 })
 
-export const { selectFilter, deselectAllFilters } = filtersSlice.actions
+export const { activateFilter, deactivateAllFilters } = filtersSlice.actions
 
 export const selectFilters = (state: RootState) => state.filters
 
-export const selectSelectedFilter = createSelector(
+export const selectActiveFilter = createSelector(
   selectFilters,
-  filters => filters.find(filter => filter.isSelected === true)
+  filters => filters.find(filter => filter.isActive === true)
 )
 
 export default filtersSlice.reducer

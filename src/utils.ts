@@ -46,3 +46,15 @@ export function rgbFromHex(hex: string) {
     b: parseInt(result[3], 16)
   } : {}
 }
+
+export function selectElementContent(element: HTMLElement) {
+  requestAnimationFrame(() => {
+    getSelection()?.selectAllChildren(element)
+  })
+}
+
+export function clearSelection() {
+  requestAnimationFrame(() => {
+    getSelection()?.empty()
+  })
+}

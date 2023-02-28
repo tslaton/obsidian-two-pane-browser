@@ -3,7 +3,7 @@ import * as React from 'react'
 import styled from '@emotion/styled'
 import { LucideIcon, FoldersIcon, InboxIcon, HistoryIcon, FilterIcon } from 'lucide-react'
 // Modules
-import { FilterMeta, selectFilter } from '../../features/filters/filtersSlice'
+import { FilterMeta, activateFilter } from '../../features/filters/filtersSlice'
 import { deselectAllFolders } from '../folders/foldersSlice'
 import { useAppDispatch } from '../../plugin/hooks'
 
@@ -11,8 +11,8 @@ import { useAppDispatch } from '../../plugin/hooks'
 export default function Filter(filter: FilterMeta) {  
   const dispatch = useAppDispatch()
 
-  function toggleIsSelected() {
-    dispatch(selectFilter(filter.id))
+  function onClick() {
+    dispatch(activateFilter(filter.id))
     dispatch(deselectAllFolders())
   }
 
@@ -24,7 +24,11 @@ export default function Filter(filter: FilterMeta) {
   const Icon = iconMap[filter.id] || FilterIcon
   
   return (
-    <StyledFilter {...filter} onClick={toggleIsSelected}>
+    <StyledFilter
+      className={`nav-item ${filter.isActive ? 'is-active' : ''}`}
+      onClick={onClick}
+      {...filter} 
+    >
       <div className="clickable-icon">
         <Icon size={18} />
       </div>
@@ -40,10 +44,6 @@ const StyledFilter = styled.div<FilterMeta>`
   flex-direction: horizontal;
   padding: 10px;
   border-radius: 4px;
-  background-color: ${filter => filter.isSelected ? 'var(--background-modifier-hover)' : 'inherit' };
-  &:hover {
-    background-color: var(--background-modifier-hover);
-  }
 
   .filter-name {
     line-height: 24px;
