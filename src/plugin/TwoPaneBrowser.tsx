@@ -35,6 +35,17 @@ export default function TwoPaneBrowser() {
     plugin.fetchFiles()
   }, [])
 
+  // Make the first file active when no file in-scope is active
+  // TODO: Decide if this behavior is actually desired
+  // It is slighty annoying if you just want to browse files vs. the open one
+  // However, you could always open your "compare" file in a tab or pane first
+  React.useEffect(() => {
+    const activeFile = filesInScope.find(file => file.isActive)
+    if (!activeFile && filesInScope.length > 0) {
+      plugin.openFile(filesInScope[0])
+    }
+  }, [filesInScope])
+
   function addNewTopLevelFolder() {
     plugin.createFolder()
   }
