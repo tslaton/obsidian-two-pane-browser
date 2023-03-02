@@ -130,19 +130,11 @@ export const selectPathsInScope = createSelector(
   (folders, selectedFolders) => {
     const allPaths = folders.map(folder => folder.path)
     const pathsInScope = new Set<string>()
-    // Consider the descendants of a selected folder in scope if none of its children are selected
+    // Consider the descendants of a selected folder in scope if it is closed
     for (let selectedFolder of selectedFolders) {
       pathsInScope.add(selectedFolder.path)
-      const descendantPaths = getDescendantPaths(selectedFolder.path, allPaths)
-      const childPaths = new Set(getChildPaths(selectedFolder.path, descendantPaths))
-      let hasSelectedChildren = false
-      for (let otherSelectedFolder of selectedFolders) {
-        if (childPaths.has(otherSelectedFolder.path)) {
-          hasSelectedChildren = true
-          break
-        }
-      }
-      if (!hasSelectedChildren) {
+      if (!selectedFolder.isExpanded) {
+        const descendantPaths = getDescendantPaths(selectedFolder.path, allPaths)
         for (let descendantPath of descendantPaths) {
           pathsInScope.add(descendantPath)
         }

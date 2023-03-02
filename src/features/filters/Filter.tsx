@@ -5,11 +5,14 @@ import { LucideIcon, FoldersIcon, InboxIcon, HistoryIcon, FilterIcon } from 'luc
 // Modules
 import { FilterMeta, activateFilter } from '../../features/filters/filtersSlice'
 import { deselectAllFolders } from '../folders/foldersSlice'
-import { useAppDispatch } from '../../plugin/hooks'
+import { selectFileCountsByFilter } from '../files/filesSlice'
+import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
 
 // NOTE: Currently pretty similar/redundant to Folder
 export default function Filter(filter: FilterMeta) {  
   const dispatch = useAppDispatch()
+  const fileCountsByFilter = useAppSelector(selectFileCountsByFilter)
+  const fileCount = fileCountsByFilter[filter.id]!
 
   function onClick() {
     dispatch(activateFilter(filter.id))
@@ -35,6 +38,9 @@ export default function Filter(filter: FilterMeta) {
       <div className="filter-name">
         {filter.name}
       </div>
+      <div className="file-count">
+        {fileCount}
+      </div>
     </StyledFilter>
   )
 }
@@ -47,5 +53,11 @@ const StyledFilter = styled.div<FilterMeta>`
 
   .filter-name {
     line-height: 24px;
+    flex: 1;
+  }
+
+  .file-count {
+    line-height: 24px;
+    color: var(--text-faint);
   }
 `

@@ -12,6 +12,7 @@ import {
   toggleFolderExpansion, toggleFolderSelection, selectFolder,
   stopAwaitingRenameFolder,
 } from './foldersSlice'
+import { makeSelectFileCountByFolder } from '../files/filesSlice'
 import { deactivateAllFilters } from '../filters/filtersSlice'
 
 interface FolderProps {
@@ -26,6 +27,8 @@ export default function Folder(props: FolderProps) {
   const Icon = folder.isExpanded ? FolderOpenIcon : FolderIcon
   const selectChildFoldersByParentPath = React.useMemo(makeSelectChildFoldersByParentPath, [])
   const childFolders = useAppSelector(state => selectChildFoldersByParentPath(state, folder.path))
+  const selectFileCountByFolder = React.useMemo(makeSelectFileCountByFolder, [])
+  const fileCount = useAppSelector(state => selectFileCountByFolder(state, folder))
 
   function toggleIsExpanded(event: React.MouseEvent) {
     event.stopPropagation()
@@ -64,6 +67,9 @@ export default function Folder(props: FolderProps) {
           isAwaitingRename={folder.isAwaitingRename}
           onBlurAction={stopAwaitingRenameFolder(folder.path)}
         />
+        <div className="file-count">
+          {fileCount}
+        </div>
       </div>
       {folder.isExpanded && childFolders.map(childFolder =>
         <Folder key={childFolder.path} folder={childFolder} level={level + 1} />
@@ -86,5 +92,10 @@ const StyledFolder = styled.div<FolderProps>`
   .folder-name {
     line-height: 24px;
     flex: 1;
+  }
+
+  .file-count {
+    line-height: 24px;
+    color: var(--text-faint);
   }
 `
