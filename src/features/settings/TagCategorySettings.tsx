@@ -43,6 +43,12 @@ export default function TagCategorySettings(props: TagCategorySettingsProps) {
   function onChangeTagsAsString(event: React.ChangeEvent<HTMLTextAreaElement>) {
     setTagAsString(event.target.value)
   }
+
+  function onDeleteCategory() {
+    const newSettings = deepcopy(settings) as TwoPaneBrowserSettings
+    delete newSettings.tagCategories[initialName]
+    plugin.saveSettings(newSettings)
+  }
   
   return (
     <StyledTagCategorySettings>
@@ -67,7 +73,16 @@ export default function TagCategorySettings(props: TagCategorySettingsProps) {
           value={tagAsString}
           onChange={onChangeTagsAsString}
         />
-        <button type="submit">Save</button>
+        <div className="update-tag-category-inputs">
+          <button type="submit">Save</button>
+          <button 
+            type="button"
+            className="mod-warning"
+            onClick={onDeleteCategory}
+          >
+            Delete Category
+          </button>
+        </div>
       </form>
     </StyledTagCategorySettings>
   )
