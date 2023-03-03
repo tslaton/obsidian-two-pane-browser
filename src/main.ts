@@ -55,6 +55,24 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new TwoPaneBrowserSettingTab(this.app, this))
 
+		// Watch for clicks on tags to redirect from default search to this search
+		this.registerDomEvent(document.body, 'click', (event: MouseEvent) => {
+			const isLivePreviewHashtag = event.target instanceof HTMLSpanElement && event.target.hasClass('cm-hashtag')
+			const isReadingViewHashtag = event.target instanceof HTMLAnchorElement && event.target.hasClass('tag')
+			if (isLivePreviewHashtag || isReadingViewHashtag) {
+				event.stopPropagation()
+				let tag: string = ''
+				if (isLivePreviewHashtag) {
+					const classes = event.target.className.split(' ')
+					tag = classes.find(c => c.startsWith('cm-tag-'))!.substring(7)
+				}
+				else if (isReadingViewHashtag) {
+					tag = event.target.href.split('#').last()!
+				}
+				console.log('tag: ', tag)
+			}
+		}, { capture: true, passive: true })
+
 		// Watch the filesystem for changes via vault
 		this.registerEvent(this.app.vault.on('create', async (f) => {
 			if (f instanceof TFile) {
