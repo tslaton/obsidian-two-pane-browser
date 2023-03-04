@@ -28,6 +28,7 @@ export default function Settings() {
     event.preventDefault()
     const newSettings = deepcopy(settings) as TwoPaneBrowserSettings
     newSettings.tagCategories[newTagCategory || 'Unnamed Category'] = {
+      name: newTagCategory || 'Unnamed Category',
       style: { color: newTagCategoryColor },
       tags: [],
     }

@@ -64,7 +64,7 @@ export default function FilePreview(props: FilePreviewProps) {
           {moment(stat.mtime).fromNow()}
         </div>
         {tags.map(tag => 
-          <Tag key={tag} tag={tag} />
+          <Tag key={tag} name={tag} />
         )}
       </div>
     </StyledFilePreview>

@@ -1,27 +1,30 @@
 // Libraries
 import * as React from 'react'
+// Modules
+import { TagFilter } from './tagFiltersSlice'
 
-// FUTURE: think about how these work with editor extensions:
-// https://marcus.se.net/obsidian-plugin-docs/editor/extensions
-// https://marcus.se.net/obsidian-plugin-docs/editor/extensions/decorations
 interface TagProps {
-  tag: string
+	name?: string
+	filterState?: TagFilter
 }
 
 export default function Tag(props: TagProps) {
-  let { tag } = props
-	tag = tag.substring(1)
+  let { name, filterState } = props
+	if (filterState) {
+		name = filterState.name
+	}
+	name = name!.substring(1)
 	const tagBeginClasses = `
-		cm-formatting cm-formatting-hashtag cm-hashtag cm-hashtag-begin cm-meta cm-tag-${tag}
+		cm-formatting cm-formatting-hashtag cm-hashtag cm-hashtag-begin cm-meta cm-tag-${name}
 	`
 	const tagEndClasses = `
-		cm-hashtag cm-hashtag-end cm-meta cm-tag-${tag}
+		cm-hashtag cm-hashtag-end cm-meta cm-tag-${name}
 	`
 
   return (
 		<div className="tag">
 			<span className={tagBeginClasses}>#</span>
-			<span className={tagEndClasses}>{tag}</span>
+			<span className={tagEndClasses}>{name}</span>
 		</div>
   )
 }

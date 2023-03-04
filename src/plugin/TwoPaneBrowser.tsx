@@ -13,7 +13,7 @@ import Filter from '../features/filters/Filter'
 import { selectFilters } from '../features/filters/filtersSlice'
 import Search from '../features/search/Search'
 import { selectSortedFilesInScope } from '../features/search/searchSlice'
-import { selectStylesByTag } from '../features/settings/settingsSlice'
+import { selectTagCategoryMetaByTag } from '../features/settings/settingsSlice'
 import { rgbFromHex } from '../utils'
 
 export default function TwoPaneBrowser() {
@@ -21,9 +21,9 @@ export default function TwoPaneBrowser() {
   const topLevelFolders = useAppSelector(selectTopLevelFolders)
   const filesInScope = useAppSelector(selectSortedFilesInScope)
   const filters = useAppSelector(selectFilters)
-  const stylesByTag = useAppSelector(selectStylesByTag)
+  const tagCategoryMetaByTag = useAppSelector(selectTagCategoryMetaByTag)
   let tagsCSS = ''
-  for (let [tag, style] of Object.entries(stylesByTag)) {
+  for (let [tag, { style }] of Object.entries(tagCategoryMetaByTag)) {
     tag = tag.substring(1)
     const { r, g, b } = rgbFromHex(style.color)
     tagsCSS += `.cm-tag-${tag} { color: ${style.color}; background-color: rgba(${r},${g},${b},0.1); }`

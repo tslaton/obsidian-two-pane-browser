@@ -9,8 +9,10 @@ import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
 import SortOptionsContextMenu from './SortOptionsContextMenu'
 import { selectSortOption } from '../search/searchSlice'
 import { selectActiveSearchOptions, toggleSearchOption, updateSearchQuery } from '../search/searchSlice'
-// import ColorCategory from '../tags/TagCategory'
-// import Tag from '../tags/Tag'
+import TagCategory from '../tags/TagCategory'
+import { tagCategoryFiltersSelectors } from '../tags/tagCategoryFiltersSlice'
+import Tag from '../tags/Tag'
+import { selectVisibleTagFilters } from '../tags/tagFiltersSlice'
 // import { selectTagsInScope, selectTagStylesInScope } from '../tags/tagsSelectors'
 
 // For clicking tags: https://discord.com/channels/686053708261228577/840286264964022302/1077674157107576872
@@ -22,11 +24,8 @@ export default function Search() {
   const activeOptions = useAppSelector(selectActiveSearchOptions)
   const showSearch = !!activeOptions.find(option => option.id === 'show-search')?.isActive
   const showTags = !!activeOptions.find(option => option.id === 'show-tags')?.isActive
-  
-  // const tagsInScope = useAppSelector(selectTagsInScope)
-  // console.log('tagsInScope: ', tagsInScope)
-  // const tagStylesInScope = useAppSelector(selectTagStylesInScope)
-  // console.log('tagStylesInScope: ', tagStylesInScope)
+  const tagCategoryFilters = useAppSelector(tagCategoryFiltersSelectors.selectAll)
+  const tagFilters = useAppSelector(selectVisibleTagFilters)
 
   function showSortOptionsContextMenu(event: React.MouseEvent) {
     const menu = SortOptionsContextMenu(sortOption)
@@ -74,8 +73,20 @@ export default function Search() {
             </div>
           </div>
           {showTags && 
-            <div>
-              tags go here
+            <div className="tag-filters-flex-container">
+              {tagCategoryFilters.map(tcf => 
+                <TagCategory
+                  key={tcf.name} 
+                  size={8} 
+                  filterState={tcf} 
+                />  
+              )}
+              {tagFilters.map(tf => 
+                <Tag
+                  key={tf.name} 
+                  filterState={tf}
+                />
+              )}
             </div>
           }
           <hr />
@@ -111,6 +122,14 @@ const StyledSearch = styled.div<StyledSearchProps>`
     .search-input-container {
       width: 100%;
     }
+  }
+
+  .tag-filters-flex-container {
+    display: flex;
+    flex-direction: horizontal;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px 0;
   }
 
   .lucide-search {

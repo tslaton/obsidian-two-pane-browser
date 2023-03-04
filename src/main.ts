@@ -12,6 +12,8 @@ import TwoPaneBrowserSettingTab from './plugin/settingsTab'
 import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, loadSettings } from './features/settings/settingsSlice'
 import { FileMeta, loadFiles, addFile, updateFile, removeFile, activateFile } from './features/files/filesSlice'
 import { FolderMeta, loadFolders, addFolder, updateFolder, removeFolder, awaitRenameFolder } from './features/folders/foldersSlice'
+import { loadTagCategories } from './features/tags/tagCategoryFiltersSlice'
+import { loadTags } from './features/tags/tagFiltersSlice'
 import { getParentPath, selectElementContent } from './utils'
 
 export default class TwoPaneBrowserPlugin extends Plugin {
@@ -150,14 +152,20 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		this.app.workspace.detachLeavesOfType(TWO_PANE_BROWSER_VIEW)
 	}
 
+	updateSettings(settings: TwoPaneBrowserSettings) {
+		store.dispatch(loadSettings(settings))
+		const tagCategories = Object.keys(settings.tagCategories)
+		store.dispatch(loadTagCategories(tagCategories))
+	}
+
 	async loadSettings() {
 		const settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData())
-		store.dispatch(loadSettings(settings))
+		this.updateSettings(settings)
 	}
 
 	async saveSettings(settings: TwoPaneBrowserSettings) {
 		await this.saveData(settings)
-		store.dispatch(loadSettings(settings))
+		this.updateSettings(settings)
 	}
 
 	async inflatedFileMetaFromTFile(file: TFile, fileCache: CachedMetadata|null=null): Promise<FileMeta> {
@@ -236,6 +244,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 
 	async fetchFiles(pathsInScope: Set<string>=new Set()) {
 		const files: FileMeta[] = []
+		const tags = new Set<string>()
 		const fs = this.app.vault.getMarkdownFiles()
 		for (let f of fs) {
 			if (pathsInScope.size === 0 || pathsInScope.has(getParentPath(f))) {
@@ -243,10 +252,14 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 				// Need tags for all files in scope but previews only for viewport...
 				const file = await this.inflatedFileMetaFromTFile(f)
 				files.push(file)
+				for (let tag of file.tags) {
+					tags.add(tag)
+				}
 			}
 		} 		
 		if (files.length) {
 			store.dispatch(loadFiles(files))
+			store.dispatch(loadTags([...tags]))
 		}
 	}
 

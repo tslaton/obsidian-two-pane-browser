@@ -7,6 +7,7 @@ import type { RootState } from '../../plugin/store'
 export type TagCategoryStyle = Record<string,string>
 
 export interface TagCategoryMeta {
+  name: string
   style: TagCategoryStyle
   tags: string[]
 }
@@ -38,16 +39,16 @@ export const selectTagCategories = createSelector(
   settings => settings.tagCategories
 )
 
-export const selectStylesByTag = createSelector(
+export const selectTagCategoryMetaByTag = createSelector(
   selectTagCategories,
   tagCategories => {
-    const stylesByTag: Record<string, TagCategoryStyle> = {}
+    const tagCategoryMetaByTag: Record<string, TagCategoryMeta> = {}
     for (let [_, categoryMeta] of Object.entries(tagCategories)) {
       for (let tag of categoryMeta.tags) {
-        stylesByTag[tag] = categoryMeta.style
+        tagCategoryMetaByTag[tag] = categoryMeta
       }
     }
-    return stylesByTag
+    return tagCategoryMetaByTag
   }
 )
 

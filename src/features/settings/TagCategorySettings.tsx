@@ -25,6 +25,7 @@ export default function TagCategorySettings(props: TagCategorySettingsProps) {
     event.preventDefault()
     const newSettings = deepcopy(settings) as TwoPaneBrowserSettings
     const categoryMeta = newSettings.tagCategories[initialName]
+    categoryMeta.name = name
     categoryMeta.style = { color }
     categoryMeta.tags = tagAsString.split(' ').map(tag => tag.trim()).filter(tag => tag.startsWith('#'))
     delete newSettings.tagCategories[initialName]
