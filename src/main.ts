@@ -59,6 +59,16 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 
 		// Watch for clicks on tags to redirect from default search to this search
 		this.registerDomEvent(document.body, 'click', (event: MouseEvent) => {
+			if (!(event.target instanceof HTMLElement)) {
+				return
+			}
+			const isTagFilter = (
+				event.target.hasClass('tag-filter') ||
+				(event.target.parentElement && event.target.parentElement.hasClass('tag-filter'))
+			)
+			if (isTagFilter) {
+				return
+			}
 			const isLivePreviewHashtag = event.target instanceof HTMLSpanElement && event.target.hasClass('cm-hashtag')
 			const isReadingViewHashtag = event.target instanceof HTMLAnchorElement && event.target.hasClass('tag')
 			if (isLivePreviewHashtag || isReadingViewHashtag) {
@@ -71,6 +81,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 				else if (isReadingViewHashtag) {
 					tag = event.target.href.split('#').last()!
 				}
+				// TODO: direct these clicks to search
 				console.log('tag: ', tag)
 			}
 		}, { capture: true, passive: true })

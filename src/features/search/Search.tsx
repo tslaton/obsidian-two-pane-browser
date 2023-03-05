@@ -2,7 +2,7 @@
 import { debounce } from 'obsidian'
 import * as React from 'react'
 import styled from '@emotion/styled'
-import { SearchIcon, EditIcon, TagsIcon, SortAscIcon, SortDescIcon } from 'lucide-react'
+import { SearchIcon, EditIcon, TagsIcon, SortAscIcon, SortDescIcon, XIcon } from 'lucide-react'
 // Modules
 import PluginContext from '../../plugin/PluginContext'
 import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
@@ -10,10 +10,12 @@ import SortOptionsContextMenu from './SortOptionsContextMenu'
 import { selectSortOption } from '../search/searchSlice'
 import { selectActiveSearchOptions, toggleSearchOption, updateSearchQuery } from '../search/searchSlice'
 import TagCategory from '../tags/TagCategory'
-import { tagCategoryFiltersSelectors } from '../tags/tagCategoryFiltersSlice'
+import { clearTagCategoryFilters } from '../../features/tags/tagCategoryFiltersSlice'
 import Tag from '../tags/Tag'
-import { selectVisibleTagFilters } from '../tags/tagFiltersSlice'
-// import { selectTagsInScope, selectTagStylesInScope } from '../tags/tagsSelectors'
+import { 
+  selectVisibleTagCategoryFilters, selectVisibleTagFilters, selectAnyTagFiltersAreApplied,
+  clearTagFilters,
+} from '../tags/tagFiltersSlice'
 
 // For clicking tags: https://discord.com/channels/686053708261228577/840286264964022302/1077674157107576872
 export default function Search() {
@@ -24,8 +26,9 @@ export default function Search() {
   const activeOptions = useAppSelector(selectActiveSearchOptions)
   const showSearch = !!activeOptions.find(option => option.id === 'show-search')?.isActive
   const showTags = !!activeOptions.find(option => option.id === 'show-tags')?.isActive
-  const tagCategoryFilters = useAppSelector(tagCategoryFiltersSelectors.selectAll)
+  const tagCategoryFilters = useAppSelector(selectVisibleTagCategoryFilters)
   const tagFilters = useAppSelector(selectVisibleTagFilters)
+  const anyTagFiltersAreApplied = useAppSelector(selectAnyTagFiltersAreApplied)
 
   function showSortOptionsContextMenu(event: React.MouseEvent) {
     const menu = SortOptionsContextMenu(sortOption)
@@ -47,6 +50,11 @@ export default function Search() {
 
   function toggleShowTags() {
     dispatch(toggleSearchOption('show-tags'))
+  }
+
+  function onClickClearTagFilters() {
+    dispatch(clearTagCategoryFilters())
+    dispatch(clearTagFilters())
   }
 
   return (
@@ -73,20 +81,34 @@ export default function Search() {
             </div>
           </div>
           {showTags && 
-            <div className="tag-filters-flex-container">
-              {tagCategoryFilters.map(tcf => 
-                <TagCategory
-                  key={tcf.name} 
-                  size={8} 
-                  filterState={tcf} 
-                />  
-              )}
-              {tagFilters.map(tf => 
-                <Tag
-                  key={tf.name} 
-                  filterState={tf}
-                />
-              )}
+            <div>
+              <div className="tag-filters-flex-controls">
+                <label htmlFor="tag-filter-options">Match:</label>
+                <select id="tag-filter-options">
+                  <option value="all">All Selected</option>
+                  <option value="any">Any Selected</option>
+                </select>
+                {anyTagFiltersAreApplied &&
+                  <div title="Clear tag filters" className="clickable-icon" onClick={onClickClearTagFilters}>
+                    <XIcon size={18} />
+                  </div>
+                }
+              </div>
+              <div className="tag-filters-flex-container">
+                {tagCategoryFilters.map(tcf => 
+                  <TagCategory
+                    key={tcf.name} 
+                    size={8} 
+                    filterState={tcf} 
+                  />  
+                )}
+                {tagFilters.map(tf => 
+                  <Tag
+                    key={tf.name} 
+                    filterState={tf}
+                  />
+                )}
+              </div>
             </div>
           }
           <hr />
@@ -124,12 +146,29 @@ const StyledSearch = styled.div<StyledSearchProps>`
     }
   }
 
+  label[for="tag-filter-options"] {
+    display: block;
+  }
+
+  #tag-filter-options {
+    background: none;
+    box-shadow: none;
+    appearance: auto;
+  }
+
+  .tag-filters-flex-controls {
+    display: flex;
+    flex-direction: horizontal;
+    align-items: center;
+    padding: 2px 2px;
+  }
+
   .tag-filters-flex-container {
     display: flex;
     flex-direction: horizontal;
     flex-wrap: wrap;
     gap: 4px;
-    padding: 4px 0;
+    padding: 2px 2px;
   }
 
   .lucide-search {

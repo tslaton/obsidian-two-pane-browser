@@ -27,10 +27,15 @@ export const tagCategoryFiltersSlice = createSlice({
       const tagCategoryFilter = state.entities[action.payload]!
       tagCategoryFilter.isActive = !tagCategoryFilter.isActive
     },
+    clearTagCategoryFilters(state) {
+      for (const [_, tagCategoryFilter] of Object.entries(state.entities)) {
+        tagCategoryFilter!.isActive = false
+      }
+    },
   },
 })
 
-export const { loadTagCategories, toggleTagCategoryFilter } = tagCategoryFiltersSlice.actions
+export const { loadTagCategories, toggleTagCategoryFilter, clearTagCategoryFilters } = tagCategoryFiltersSlice.actions
 
 export const tagCategoryFiltersSelectors = tagCategoryFiltersAdapter.getSelectors<RootState>(
   state => state.tagCategoryFilters

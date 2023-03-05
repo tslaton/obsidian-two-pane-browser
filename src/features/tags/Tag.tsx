@@ -1,7 +1,9 @@
 // Libraries
 import * as React from 'react'
+import styled from '@emotion/styled'
 // Modules
-import { TagFilter } from './tagFiltersSlice'
+import { useAppDispatch } from '../../plugin/hooks'
+import { TagFilter, toggleTagFilter } from './tagFiltersSlice'
 
 interface TagProps {
 	name?: string
@@ -13,6 +15,14 @@ export default function Tag(props: TagProps) {
 	if (filterState) {
 		name = filterState.name
 	}
+	const dispatch = useAppDispatch()
+
+	function onClick() {
+		if (filterState) {
+			dispatch(toggleTagFilter(filterState.name))
+		}
+	}
+
 	name = name!.substring(1)
 	const tagBeginClasses = `
 		cm-formatting cm-formatting-hashtag cm-hashtag cm-hashtag-begin cm-meta cm-tag-${name}
@@ -22,12 +32,21 @@ export default function Tag(props: TagProps) {
 	`
 
   return (
-		<div className="tag">
+		<StyledTag className="tag-filter" onClick={onClick} {...props}>
 			<span className={tagBeginClasses}>#</span>
 			<span className={tagEndClasses}>{name}</span>
-		</div>
+		</StyledTag>
   )
 }
+
+const StyledTag = styled.div<TagProps>`
+	${props => props.filterState?.status && 
+		`span {
+			color: ${props.filterState?.status === 'include' ? 'white' : props.filterState?.status === 'exclude' ? 'var(--text-faint)' : 'initial' };
+			text-decoration: ${props.filterState?.status === 'exclude' ? 'line-through' : 'initial'};
+		}`
+	}
+`
 
 // --tag-size: var(--font-smaller);
 // --tag-color: var(--text-accent);
