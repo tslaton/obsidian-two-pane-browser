@@ -5,6 +5,18 @@ import type { RootState } from '../../plugin/store'
 import { selectFilesInScope } from '../files/filesSlice'
 import { revealTag } from '../tags/extraActions'
 
+// Search recipe (credit to liam on Discord)
+// The fuzzySearch function has nothing to do with files, it just lets you fuzzy search for strings. 
+// You'll need to iterate through the files yourself. A basic approach would be:
+
+// - get all files
+// - get query from some input element
+// - prepare fuzzy search using input value
+// - filter files by fuzzy search result
+// - sort list of files by SearchResult.score
+
+// Ref: https://discord.com/channels/686053708261228577/840286264964022302/1078375455826120895
+
 interface SearchOption {
   id: string
   name: string
