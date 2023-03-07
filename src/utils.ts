@@ -34,10 +34,6 @@ export function deepcopy(obj: any) {
   return JSON.parse(JSON.stringify(obj))
 }
 
-export function sortedEntries(obj: any) {
-  return Object.entries(obj).sort((a, b) => a[0].localeCompare(b[0]))
-}
-
 export function rgbFromHex(hex: string) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
   return result ? {

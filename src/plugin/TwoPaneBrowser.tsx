@@ -13,7 +13,7 @@ import Filter from '../features/filters/Filter'
 import { selectFilters } from '../features/filters/filtersSlice'
 import Search from '../features/search/Search'
 import { selectSortedFilesInScope } from '../features/search/searchSlice'
-import { selectTagCategoryMetaByTag } from '../features/settings/settingsSlice'
+import { selectTagCategoryByTagName } from '../features/tags/tagFiltersSlice'
 import { rgbFromHex } from '../utils'
 
 export default function TwoPaneBrowser() {
@@ -21,12 +21,12 @@ export default function TwoPaneBrowser() {
   const topLevelFolders = useAppSelector(selectTopLevelFolders)
   const filesInScope = useAppSelector(selectSortedFilesInScope)
   const filters = useAppSelector(selectFilters)
-  const tagCategoryMetaByTag = useAppSelector(selectTagCategoryMetaByTag)
+  const tagCategoryByTagName = useAppSelector(selectTagCategoryByTagName)
   let tagsCSS = ''
-  for (let [tag, { style }] of Object.entries(tagCategoryMetaByTag)) {
-    tag = tag.substring(1)
+  for (let [tagName, { style }] of Object.entries(tagCategoryByTagName)) {
+    tagName = tagName.substring(1)
     const { r, g, b } = rgbFromHex(style.color)
-    tagsCSS += `.cm-tag-${tag} { color: ${style.color}; background-color: rgba(${r},${g},${b},0.1); }`
+    tagsCSS += `.cm-tag-${tagName} { color: ${style.color}; background-color: rgba(${r},${g},${b},0.1); }`
   }
 
   // FUTURE: Consider fetching files more efficiently (ie, before filters only fetched files for paths in scope)

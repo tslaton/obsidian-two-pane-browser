@@ -2,34 +2,31 @@
 import * as React from 'react'
 import styled from '@emotion/styled'
 // Modules
-import { useAppSelector, useAppDispatch } from '../../plugin/hooks'
-import { selectTagCategories} from '../settings/settingsSlice'
-import { TagCategoryFilter, toggleTagCategoryFilter } from '../tags/tagCategoryFiltersSlice'
+import { useAppDispatch } from '../../plugin/hooks'
+import { TagCategoryFilter, toggleTagCategoryFilter } from './tagFiltersSlice'
 
-interface ColorCategoryProps {
+interface TagCategoryProps extends TagCategoryFilter {
   size: number
-  filterState: TagCategoryFilter
 }
 
-export default function TagCategory({ size, filterState }: ColorCategoryProps) {
-  const tagCategories = useAppSelector(selectTagCategories)
-  const color = tagCategories[filterState.name].style.color
+export default function TagCategory(props: TagCategoryProps) {
+  const { name, style, size } = props
   const dispatch = useAppDispatch() 
 
   function onClick() {
-    dispatch(toggleTagCategoryFilter(filterState.name))
+    dispatch(toggleTagCategoryFilter(name))
   }
 
   return (
-    <StyledTagCategory onClick={onClick} {...filterState}>
+    <StyledTagCategory onClick={onClick} {...props}>
       <svg width={size*2} height={size*2} viewBox={`0 0 ${size*2} ${size*2}`}>
-        <circle cx={size} cy={size} r={size} fill={color} />
+        <circle cx={size} cy={size} r={size} fill={style.color} />
       </svg>
     </StyledTagCategory>
   )
 }
 
-const StyledTagCategory = styled.div<TagCategoryFilter>`
+const StyledTagCategory = styled.div<TagCategoryProps>`
   circle {
     stroke-width: ${props => props.isActive ? '2px' : '0px'};
     stroke: ${props => props.isActive ? 'white' : 'initial'};

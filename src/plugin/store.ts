@@ -7,7 +7,6 @@ import filesReducer from '../features/files/filesSlice'
 import filtersReducer from '../features/filters/filtersSlice'
 import searchReducer from '../features/search/searchSlice'
 import tagFiltersReducer from '../features/tags/tagFiltersSlice'
-import tagCategoryFiltersReducer from '../features/tags/tagCategoryFiltersSlice'
 
 const store = configureStore({
   reducer: {
@@ -17,7 +16,6 @@ const store = configureStore({
     filters: filtersReducer,
     search: searchReducer,
     tagFilters: tagFiltersReducer,
-    tagCategoryFilters: tagCategoryFiltersReducer,
   },
 })
 

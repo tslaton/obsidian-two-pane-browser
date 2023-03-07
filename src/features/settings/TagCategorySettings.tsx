@@ -4,32 +4,26 @@ import styled from '@emotion/styled'
 // Modules
 import PluginContext from '../../plugin/PluginContext'
 import { useAppSelector } from '../../plugin/hooks'
-import { TwoPaneBrowserSettings, TagCategoryStyle, selectSettings } from './settingsSlice'
+import { TwoPaneBrowserSettings, TagCategory, selectSettings } from './settingsSlice'
 import { deepcopy } from '../../utils'
 
-interface TagCategorySettingsProps {
-  name: string
-  style: TagCategoryStyle
-  tags: string[]
-}
-
-export default function TagCategorySettings(props: TagCategorySettingsProps) {
-  const { name: initialName, style, tags: initialTags } = props
+export default function TagCategorySettings({ tagCategory }: { tagCategory: TagCategory }) {
+  const { name: initialName, style, tagNames: initialTagNames } = tagCategory
   const [name, setName] = React.useState(initialName)
   const [color, setColor] = React.useState(style.color)
-  const [tagAsString, setTagAsString] = React.useState(initialTags.join(' '))
+  const [tagNamesAsString, setTagNamesAsString] = React.useState(initialTagNames.join(' '))
   const settings = useAppSelector(selectSettings)
   const plugin = React.useContext(PluginContext)
 
   function onSubmitUpdateTagCategory(event: React.FormEvent) {
     event.preventDefault()
     const newSettings = deepcopy(settings) as TwoPaneBrowserSettings
-    const categoryMeta = newSettings.tagCategories[initialName]
-    categoryMeta.name = name
-    categoryMeta.style = { color }
-    categoryMeta.tags = tagAsString.split(' ').map(tag => tag.trim()).filter(tag => tag.startsWith('#'))
+    const tagCategory = newSettings.tagCategories[initialName]
+    tagCategory.name = name
+    tagCategory.style = { color }
+    tagCategory.tagNames = tagNamesAsString.split(' ').map(t => t.trim()).filter(t => t.startsWith('#'))
     delete newSettings.tagCategories[initialName]
-    newSettings.tagCategories[name] = categoryMeta
+    newSettings.tagCategories[name] = tagCategory
     plugin.saveSettings(newSettings)
   }
 
@@ -41,8 +35,8 @@ export default function TagCategorySettings(props: TagCategorySettingsProps) {
     setColor(event.target.value)
   }
 
-  function onChangeTagsAsString(event: React.ChangeEvent<HTMLTextAreaElement>) {
-    setTagAsString(event.target.value)
+  function onChangeTagNamesAsString(event: React.ChangeEvent<HTMLTextAreaElement>) {
+    setTagNamesAsString(event.target.value)
   }
 
   function onDeleteCategory() {
@@ -71,8 +65,8 @@ export default function TagCategorySettings(props: TagCategorySettingsProps) {
           rows={8} 
           cols={60}
           placeholder="Enter tags, separated by spaces and including #" 
-          value={tagAsString}
-          onChange={onChangeTagsAsString}
+          value={tagNamesAsString}
+          onChange={onChangeTagNamesAsString}
         />
         <div className="update-tag-category-inputs">
           <button type="submit">Save</button>

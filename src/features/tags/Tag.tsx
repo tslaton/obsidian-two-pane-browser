@@ -6,44 +6,44 @@ import { useAppDispatch } from '../../plugin/hooks'
 import { TagFilter, toggleTagFilter } from './tagFiltersSlice'
 
 interface TagProps {
-	name?: string
-	filterState?: TagFilter
+	name: string
+	style?: Record<string, string>
+	status?: 'include' | 'exclude' | null
 }
 
 export default function Tag(props: TagProps) {
-  let { name, filterState } = props
-	if (filterState) {
-		name = filterState.name
-	}
+  const { name, style, status } = props
+	console.log('tag: ', name, 'status: ', status)
 	const dispatch = useAppDispatch()
 
 	function onClick() {
-		if (filterState) {
-			dispatch(toggleTagFilter(filterState.name))
+		// TODO: fix this jank
+		if (style !== undefined) {
+			dispatch(toggleTagFilter(name))
 		}
 	}
 
-	name = name!.substring(1)
+	const plainName = name.substring(1)
 	const tagBeginClasses = `
-		cm-formatting cm-formatting-hashtag cm-hashtag cm-hashtag-begin cm-meta cm-tag-${name}
+		cm-formatting cm-formatting-hashtag cm-hashtag cm-hashtag-begin cm-meta cm-tag-${plainName}
 	`
 	const tagEndClasses = `
-		cm-hashtag cm-hashtag-end cm-meta cm-tag-${name}
+		cm-hashtag cm-hashtag-end cm-meta cm-tag-${plainName}
 	`
 
   return (
 		<StyledTag className="tag-filter" onClick={onClick} {...props}>
 			<span className={tagBeginClasses}>#</span>
-			<span className={tagEndClasses}>{name}</span>
+			<span className={tagEndClasses}>{plainName}</span>
 		</StyledTag>
   )
 }
 
 const StyledTag = styled.div<TagProps>`
-	${props => props.filterState?.status && 
+	${props => props.status && 
 		`span {
-			color: ${props.filterState?.status === 'include' ? 'white' : props.filterState?.status === 'exclude' ? 'var(--text-faint)' : 'initial' };
-			text-decoration: ${props.filterState?.status === 'exclude' ? 'line-through' : 'initial'};
+			color: ${props.status === 'include' ? 'white' : props.status === 'exclude' ? 'var(--text-faint)' : 'initial' };
+			text-decoration: ${props.status === 'exclude' ? 'line-through' : 'initial'};
 		}`
 	}
 `

@@ -5,13 +5,13 @@ import styled from '@emotion/styled'
 import PluginContext from '../../plugin/PluginContext'
 import { useAppSelector } from '../../plugin/hooks'
 import TagCategorySettings from './TagCategorySettings'
-import { TwoPaneBrowserSettings, TagCategoryMeta, selectSettings } from './settingsSlice'
-import { deepcopy, sortedEntries } from '../../utils'
+import { TwoPaneBrowserSettings, selectSettings } from './settingsSlice'
+import { deepcopy } from '../../utils'
 
 export default function Settings() {
   const plugin = React.useContext(PluginContext)
   const settings = useAppSelector(selectSettings)
-  const categoryData = sortedEntries(settings.tagCategories) as [string, TagCategoryMeta][]
+  const tagCategories = Object.values(settings.tagCategories).sort((a, b) => a.name.localeCompare(b.name))
   const [newTagCategory, setNewTagCategory] = React.useState('')
   const [newTagCategoryColor, setNewTagCategoryColor] = React.useState('#ffffff')
 
@@ -27,10 +27,11 @@ export default function Settings() {
   function onSubmitAddTagCategory(event: React.FormEvent) {
     event.preventDefault()
     const newSettings = deepcopy(settings) as TwoPaneBrowserSettings
-    newSettings.tagCategories[newTagCategory || 'Unnamed Category'] = {
-      name: newTagCategory || 'Unnamed Category',
+    const name = newTagCategory || 'Unnamed Category'
+    newSettings.tagCategories[name] = {
+      name,
       style: { color: newTagCategoryColor },
-      tags: [],
+      tagNames: [],
     }
     plugin.saveSettings(newSettings)
   }
@@ -39,12 +40,10 @@ export default function Settings() {
     <StyledSettings>
       <h2>Settings for Two-Pane Browser</h2>
       <h3>Tag Categories</h3>
-      {categoryData.map(([category, categoryMeta]) =>
+      {tagCategories.map(tagCategory =>
         <TagCategorySettings 
-          key={category} 
-          name={category} 
-          style={categoryMeta.style}
-          tags={categoryMeta.tags}
+          key={tagCategory.name}
+          tagCategory={tagCategory}
         />
       )}
       <hr />
