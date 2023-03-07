@@ -7,19 +7,19 @@ import {
   TwoPaneBrowserSettings, loadSettings,
   TagCategory, selectTagCategories,
 } from '../settings/settingsSlice'
+import { isSubset } from '../../utils'
 
-// would extend TagCategory, but dropping tagNames
 export interface TagCategoryFilter {
   name: string
-  style: Record<string, string>
+  color: string
   isActive: boolean
+  size?: number
 }
 
-// Actually, style might not be necessary...
 export interface TagFilter {
   name: string
-  style: Record<string,string>
-  status: 'include' | 'exclude' | null
+  color?: string
+  status?: 'include' | 'exclude' | null
 }
 
 export const tagFiltersSlice = createSlice({
@@ -50,7 +50,6 @@ export const tagFiltersSlice = createSlice({
         state.includeTagNames = state.includeTagNames.filter(isTagInActiveCategory)
         state.excludeTagNames = state.excludeTagNames.filter(isTagInActiveCategory)
       }
-
     },
     toggleTagFilter(state, action: PayloadAction<string>) {
       const tagName = action.payload
@@ -68,6 +67,23 @@ export const tagFiltersSlice = createSlice({
       // If it was in neither list, put in include list
       else {
         state.includeTagNames.push(tagName)
+      }
+    },
+    reconcileActiveTagCategoryNames(state, action: PayloadAction<string[]>) {
+      const tagCategoryNamesInScope = action.payload
+      const validNames = new Set(tagCategoryNamesInScope)
+      if (!isSubset(state.activeTagCategoryNames, validNames)) {
+        state.activeTagCategoryNames = state.activeTagCategoryNames.filter(name => validNames.has(name))
+      }
+    },
+    reconcileFilteredTagNames(state, action: PayloadAction<string[]>) {
+      const tagNamesInScope = action.payload
+      const validNames = new Set(tagNamesInScope)
+      if (!isSubset(state.includeTagNames, validNames)) {
+        state.includeTagNames = state.includeTagNames.filter(name => validNames.has(name))
+      }
+      if (!isSubset(state.excludeTagNames, validNames)) {
+        state.excludeTagNames = state.excludeTagNames.filter(name => validNames.has(name))
       }
     },
     clearTagFilters(state) {
@@ -92,7 +108,10 @@ export const tagFiltersSlice = createSlice({
   },
 })
 
-export const { toggleTagCategoryFilter, toggleTagFilter, clearTagFilters } = tagFiltersSlice.actions
+export const { 
+  toggleTagCategoryFilter, toggleTagFilter, 
+  reconcileActiveTagCategoryNames, reconcileFilteredTagNames, clearTagFilters, 
+} = tagFiltersSlice.actions
 
 export const selectTagNamesInScope = createSelector(
   selectFilesInScope,
@@ -162,12 +181,11 @@ export const selectTagFiltersInScope = createSelector(
         }
         tagFiltersInScope.push({
           name: tagName,
-          style: tagCategory.style || {},
+          color: tagCategoryByTagName[tagName]?.style?.color || 'var(--color-accent)',
           status,
         })
       }
     }
-    console.log('tagFiltersInScope: ', tagFiltersInScope)
     return tagFiltersInScope
   }
 )
@@ -196,7 +214,7 @@ export const selectTagCategoryFiltersInScope = createSelector(
     for (let tagCategoryName of tagCategoryNamesInScope) {
       tagCategoryFiltersInScope.push({
         name: tagCategoryName,
-        style: (tagCategories[tagCategoryName] || {}).style || {},
+        color: tagCategories[tagCategoryName].style.color,
         isActive: activeTagCategoryNames.indexOf(tagCategoryName) !== -1
       })
     }

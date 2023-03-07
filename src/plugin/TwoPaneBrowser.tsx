@@ -14,7 +14,7 @@ import { selectFilters } from '../features/filters/filtersSlice'
 import Search from '../features/search/Search'
 import { selectSortedFilesInScope } from '../features/search/searchSlice'
 import { selectTagCategoryByTagName } from '../features/tags/tagFiltersSlice'
-import { rgbFromHex } from '../utils'
+import { alphaColor } from '../utils'
 
 export default function TwoPaneBrowser() {
   const plugin = React.useContext(PluginContext)
@@ -25,8 +25,7 @@ export default function TwoPaneBrowser() {
   let tagsCSS = ''
   for (let [tagName, { style }] of Object.entries(tagCategoryByTagName)) {
     tagName = tagName.substring(1)
-    const { r, g, b } = rgbFromHex(style.color)
-    tagsCSS += `.cm-tag-${tagName} { color: ${style.color}; background-color: rgba(${r},${g},${b},0.1); }`
+    tagsCSS += `.cm-tag-${tagName} { color: ${style.color}; background-color: ${alphaColor(style.color)} }`
   }
 
   // FUTURE: Consider fetching files more efficiently (ie, before filters only fetched files for paths in scope)

@@ -8,7 +8,8 @@ import TagCategory from '../tags/TagCategory'
 import Tag from '../tags/Tag'
 import { 
   selectTagCategoryFiltersInScope, selectTagFiltersInScope, selectAnyTagFiltersAreApplied,
-  clearTagFilters, 
+  selectTagCategoryNamesInScope, selectTagNamesInScope, 
+  reconcileActiveTagCategoryNames, reconcileFilteredTagNames, clearTagFilters, 
 } from '../tags/tagFiltersSlice'
 
 export default function TagFiltersContainer() {
@@ -17,11 +18,16 @@ export default function TagFiltersContainer() {
   const tagFilters = useAppSelector(selectTagFiltersInScope)
   const anyTagFiltersAreApplied = useAppSelector(selectAnyTagFiltersAreApplied)
 
-  // Reset the filters when the tagsInScope change
-  // Remove activeCategories/include/excludeTags that aren't in scope
-  // React.useEffect(() => {
-  //   dispatch(clearTagFilters())
-  // }, [tagsInScope])
+  // Clean up state for tags that leave scope
+  const tagCategoryNamesInScope = useAppSelector(selectTagCategoryNamesInScope)
+  React.useEffect(() => {
+    dispatch(reconcileActiveTagCategoryNames(tagCategoryNamesInScope))
+  }, [tagCategoryNamesInScope])
+
+  const tagNamesInScope = useAppSelector(selectTagNamesInScope)
+  React.useEffect(() => {
+    dispatch(reconcileFilteredTagNames(tagNamesInScope))
+  }, [tagNamesInScope])
 
   function onClickClearTagFilters() {
     dispatch(clearTagFilters())
@@ -46,16 +52,15 @@ export default function TagFiltersContainer() {
           <TagCategory
             key={tcf.name}
             name={tcf.name}
-            style={tcf.style}
+            color={tcf.color}
             isActive={tcf.isActive} 
-            size={8} 
           />  
         )}
         {tagFilters.map(tf => 
           <Tag
             key={tf.name} 
             name={tf.name}
-            style={tf.style}
+            color={tf.color}
             status={tf.status}
           />
         )}
@@ -80,13 +85,15 @@ const StyledTagFiltersContainer = styled.div`
     flex-direction: horizontal;
     align-items: center;
     padding: 2px 2px;
+    gap: 4px;
   }
 
   .tag-filters-flex-container {
     display: flex;
     flex-direction: horizontal;
     flex-wrap: wrap;
-    gap: 4px;
+    column-gap: 4px;
+    row-gap: 8px;
     padding: 2px 2px;
   }
 `

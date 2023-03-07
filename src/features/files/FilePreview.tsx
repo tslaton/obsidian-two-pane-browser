@@ -84,9 +84,10 @@ const StyledFilePreview = styled.div<FilePreviewProps>`
     display: flex;
     flex-direction: horizontal;
     flex-wrap: wrap;
+    align-items: center;
 
     .tag {
-      margin: 2px;
+      margin: 2px 0.5px;
     }
   }
 

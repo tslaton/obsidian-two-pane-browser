@@ -5,49 +5,62 @@ import styled from '@emotion/styled'
 import { useAppDispatch } from '../../plugin/hooks'
 import { TagFilter, toggleTagFilter } from './tagFiltersSlice'
 
-interface TagProps {
-	name: string
-	style?: Record<string, string>
-	status?: 'include' | 'exclude' | null
-}
-
-export default function Tag(props: TagProps) {
-  const { name, style, status } = props
-	console.log('tag: ', name, 'status: ', status)
+export default function Tag(props: TagFilter) {
+  const { name, status } = props
 	const dispatch = useAppDispatch()
 
 	function onClick() {
-		// TODO: fix this jank
-		if (style !== undefined) {
+		if (status !== undefined) {
 			dispatch(toggleTagFilter(name))
 		}
 	}
 
 	const plainName = name.substring(1)
-	const tagBeginClasses = `
+	const _tagBeginClasses = `
 		cm-formatting cm-formatting-hashtag cm-hashtag cm-hashtag-begin cm-meta cm-tag-${plainName}
 	`
-	const tagEndClasses = `
+	const _tagEndClasses = `
 		cm-hashtag cm-hashtag-end cm-meta cm-tag-${plainName}
 	`
+	const tagBeginClasses = status 
+	  ? `${_tagBeginClasses} ${status}`
+	  : _tagBeginClasses
+
+	const tagEndClasses = status
+	  ? `${_tagEndClasses} ${status}`
+	  : _tagEndClasses
+
+	const identifyingClassName = status === undefined
+		? 'tag'
+		: 'tag-filter'
 
   return (
-		<StyledTag className="tag-filter" onClick={onClick} {...props}>
+		<StyledTag className={identifyingClassName} onClick={onClick} {...props}>
 			<span className={tagBeginClasses}>#</span>
 			<span className={tagEndClasses}>{plainName}</span>
 		</StyledTag>
   )
 }
 
-const StyledTag = styled.div<TagProps>`
-	${props => props.status && 
-		`span {
-			color: ${props.status === 'include' ? 'white' : props.status === 'exclude' ? 'var(--text-faint)' : 'initial' };
-			text-decoration: ${props.status === 'exclude' ? 'line-through' : 'initial'};
-		}`
+const StyledTag = styled.div<TagFilter>`
+	span.include {
+		border-color: ${props => props.color};
+
+		&.cm-hashtag-begin {
+			border-width: 2px 0 2px 2px;
+		}
+
+		&.cm-hashtag-end {
+			border-width: 2px 2px 2px 0;
+		}
+	}
+
+	span.exclude {
+		color: var(--text-faint);
+		text-decoration: line-through;
 	}
 `
-
+// Obsidian CSS vars
 // --tag-size: var(--font-smaller);
 // --tag-color: var(--text-accent);
 // --tag-color-hover: var(--text-accent);

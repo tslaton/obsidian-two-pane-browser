@@ -96,6 +96,7 @@ const StyledSearch = styled.div<StyledSearchProps>`
   .search-flex-wrapper {
     display: flex;
     flex-direction: horizontal;
+    gap: 4px;
 
     .search-input-container {
       width: 100%;

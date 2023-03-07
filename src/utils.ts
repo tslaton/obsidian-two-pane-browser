@@ -34,6 +34,12 @@ export function deepcopy(obj: any) {
   return JSON.parse(JSON.stringify(obj))
 }
 
+export function isSubset(a: Iterable<any>, b: Iterable<any>) {
+  const _a = a instanceof Array ? a : [...a]
+  const _b = b instanceof Set ? b : new Set(b)
+  return _a.every(value => _b.has(value))
+}
+
 export function rgbFromHex(hex: string) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
   return result ? {
@@ -41,6 +47,11 @@ export function rgbFromHex(hex: string) {
     g: parseInt(result[2], 16),
     b: parseInt(result[3], 16)
   } : {}
+}
+
+export function alphaColor(hex: string, alpha=0.1) {
+  const { r, g, b } = rgbFromHex(hex)
+  return `rgba(${r},${g},${b},${alpha})`
 }
 
 export function selectElementContent(element: HTMLElement) {
