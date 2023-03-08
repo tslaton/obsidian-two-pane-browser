@@ -12,6 +12,7 @@ import TwoPaneBrowserSettingTab from './plugin/settingsTab'
 import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, loadSettings } from './features/settings/settingsSlice'
 import { FileMeta, loadFiles, addFile, updateFile, removeFile, activateFile } from './features/files/filesSlice'
 import { FolderMeta, loadFolders, addFolder, updateFolder, removeFolder, awaitRenameFolder } from './features/folders/foldersSlice'
+import { revealTag } from './features/tags/extraActions'
 import { getParentPath, selectElementContent } from './utils'
 
 export default class TwoPaneBrowserPlugin extends Plugin {
@@ -79,8 +80,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 				else if (isReadingViewHashtag) {
 					tag = event.target.href.split('#').last()!
 				}
-				// TODO: direct these clicks to search
-				console.log('tag: ', tag)
+				store.dispatch(revealTag(`#${tag.trim()}`))
 			}
 		}, { capture: true, passive: true })
 

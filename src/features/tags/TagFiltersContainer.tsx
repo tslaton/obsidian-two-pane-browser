@@ -54,7 +54,7 @@ export default function TagFiltersContainer() {
         }
       </div>
       <div className="tag-filters-flex-container">
-        {tagCategoryFilters.map(tcf => 
+        {tagCategoryFilters.length > 1 && tagCategoryFilters.map(tcf => 
           <TagCategory
             key={tcf.name}
             name={tcf.name}

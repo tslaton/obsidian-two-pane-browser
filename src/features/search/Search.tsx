@@ -19,7 +19,7 @@ export default function Search() {
   const SortIcon = sortOption.direction === 'asc' ? SortAscIcon : SortDescIcon
   const activeOptions = useAppSelector(selectActiveSearchOptions)
   const showSearch = !!activeOptions.find(option => option.id === 'show-search')?.isActive
-  const showTags = !!activeOptions.find(option => option.id === 'show-tags')?.isActive
+  const showTags = !!activeOptions.find(option => option.id === 'show-tag-filters')?.isActive
 
   function showSortOptionsContextMenu(event: React.MouseEvent) {
     const menu = SortOptionsContextMenu(sortOption)
@@ -39,8 +39,8 @@ export default function Search() {
   }
   const debouncedUpdateSearchQuery = debounce(onChangeQuery, 1000, true)
 
-  function toggleShowTags() {
-    dispatch(toggleSearchOption('show-tags'))
+  function toggleShowTagFilters() {
+    dispatch(toggleSearchOption('show-tag-filters'))
   }
 
   return (
@@ -62,7 +62,7 @@ export default function Search() {
             <div className="search-input-container">
               <input type="text" name="scoped-search" onChange={debouncedUpdateSearchQuery} />
             </div>
-            <div className="clickable-icon" onClick={toggleShowTags}>
+            <div className="clickable-icon" onClick={toggleShowTagFilters}>
               <TagsIcon size={22} />
             </div>
           </div>

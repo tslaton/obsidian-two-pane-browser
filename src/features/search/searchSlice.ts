@@ -3,6 +3,7 @@ import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit'
 // Modules
 import type { RootState } from '../../plugin/store'
 import { selectFilesInScope } from '../files/filesSlice'
+import { revealTag } from '../tags/extraActions'
 
 interface SearchOption {
   id: string
@@ -21,7 +22,7 @@ export const searchSlice = createSlice({
     query: '',
     options: [
       { id: 'show-search', name: 'Show Search', isActive: false },
-      { id: 'show-tags', name: 'Show Tags', isActive: false },
+      { id: 'show-tag-filters', name: 'Show Tag Filters', isActive: false },
     ] as SearchOption[],
     sort: { property: 'mtime', direction: 'desc' } as SortOption,
   },
@@ -39,6 +40,13 @@ export const searchSlice = createSlice({
     setSortOption(state, action: PayloadAction<SortOption>) {
       state.sort = action.payload
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(revealTag, (state) => {
+        state.options[0].isActive = true
+        state.options[1].isActive = true
+      })
   },
 })
 

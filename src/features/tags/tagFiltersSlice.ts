@@ -8,6 +8,7 @@ import {
   TwoPaneBrowserSettings, loadSettings,
   TagCategory, selectTagCategories,
 } from '../settings/settingsSlice'
+import { revealTag } from './extraActions'
 import { isSubset, intersection } from '../../utils'
 
 export interface TagCategoryFilter {
@@ -110,11 +111,17 @@ export const tagFiltersSlice = createSlice({
         }
         state.tagCategoryByTagName = tagCategoryByTagName
       })
+      .addCase(revealTag, (state, action: PayloadAction<string>) => {
+        const tagName = action.payload
+        state.activeTagCategoryNames = []
+        state.includeTagNames = [tagName]
+        state.excludeTagNames = []
+      })
   },
 })
 
 export const { 
-  updateMatchMode, toggleTagCategoryFilter, toggleTagFilter, 
+  updateMatchMode, toggleTagCategoryFilter, toggleTagFilter,
   reconcileActiveTagCategoryNames, reconcileFilteredTagNames, clearTagFilters, 
 } = tagFiltersSlice.actions
 
