@@ -9,9 +9,7 @@ import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
 import SortOptionsContextMenu from './SortOptionsContextMenu'
 import { selectSortOption } from '../search/searchSlice'
 import { selectActiveSearchOptions, toggleSearchOption, updateSearchQuery } from '../search/searchSlice'
-// import ColorCategory from '../tags/TagCategory'
-// import Tag from '../tags/Tag'
-// import { selectTagsInScope, selectTagStylesInScope } from '../tags/tagsSelectors'
+import TagFiltersContainer from '../tags/TagFiltersContainer'
 
 // For clicking tags: https://discord.com/channels/686053708261228577/840286264964022302/1077674157107576872
 export default function Search() {
@@ -21,12 +19,7 @@ export default function Search() {
   const SortIcon = sortOption.direction === 'asc' ? SortAscIcon : SortDescIcon
   const activeOptions = useAppSelector(selectActiveSearchOptions)
   const showSearch = !!activeOptions.find(option => option.id === 'show-search')?.isActive
-  const showTags = !!activeOptions.find(option => option.id === 'show-tags')?.isActive
-  
-  // const tagsInScope = useAppSelector(selectTagsInScope)
-  // console.log('tagsInScope: ', tagsInScope)
-  // const tagStylesInScope = useAppSelector(selectTagStylesInScope)
-  // console.log('tagStylesInScope: ', tagStylesInScope)
+  const showTags = !!activeOptions.find(option => option.id === 'show-tag-filters')?.isActive
 
   function showSortOptionsContextMenu(event: React.MouseEvent) {
     const menu = SortOptionsContextMenu(sortOption)
@@ -46,8 +39,8 @@ export default function Search() {
   }
   const debouncedUpdateSearchQuery = debounce(onChangeQuery, 1000, true)
 
-  function toggleShowTags() {
-    dispatch(toggleSearchOption('show-tags'))
+  function toggleShowTagFilters() {
+    dispatch(toggleSearchOption('show-tag-filters'))
   }
 
   return (
@@ -69,15 +62,11 @@ export default function Search() {
             <div className="search-input-container">
               <input type="text" name="scoped-search" onChange={debouncedUpdateSearchQuery} />
             </div>
-            <div className="clickable-icon" onClick={toggleShowTags}>
+            <div className="clickable-icon" onClick={toggleShowTagFilters}>
               <TagsIcon size={22} />
             </div>
           </div>
-          {showTags && 
-            <div>
-              tags go here
-            </div>
-          }
+          {showTags && <TagFiltersContainer />}
           <hr />
         </>
       }
@@ -107,6 +96,7 @@ const StyledSearch = styled.div<StyledSearchProps>`
   .search-flex-wrapper {
     display: flex;
     flex-direction: horizontal;
+    gap: 4px;
 
     .search-input-container {
       width: 100%;
@@ -120,5 +110,4 @@ const StyledSearch = styled.div<StyledSearchProps>`
   .lucide-tags {
     color: ${props => props.showTags ? 'var(--color-accent)' : 'inherit'};
   }
-
 `

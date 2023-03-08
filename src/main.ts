@@ -12,6 +12,7 @@ import TwoPaneBrowserSettingTab from './plugin/settingsTab'
 import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, loadSettings } from './features/settings/settingsSlice'
 import { FileMeta, loadFiles, addFile, updateFile, removeFile, activateFile } from './features/files/filesSlice'
 import { FolderMeta, loadFolders, addFolder, updateFolder, removeFolder, awaitRenameFolder } from './features/folders/foldersSlice'
+import { revealTag } from './features/tags/extraActions'
 import { getParentPath, selectElementContent } from './utils'
 
 export default class TwoPaneBrowserPlugin extends Plugin {
@@ -57,6 +58,16 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 
 		// Watch for clicks on tags to redirect from default search to this search
 		this.registerDomEvent(document.body, 'click', (event: MouseEvent) => {
+			if (!(event.target instanceof HTMLElement)) {
+				return
+			}
+			const isTagFilter = (
+				event.target.hasClass('tag-filter') ||
+				(event.target.parentElement && event.target.parentElement.hasClass('tag-filter'))
+			)
+			if (isTagFilter) {
+				return
+			}
 			const isLivePreviewHashtag = event.target instanceof HTMLSpanElement && event.target.hasClass('cm-hashtag')
 			const isReadingViewHashtag = event.target instanceof HTMLAnchorElement && event.target.hasClass('tag')
 			if (isLivePreviewHashtag || isReadingViewHashtag) {
@@ -69,7 +80,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 				else if (isReadingViewHashtag) {
 					tag = event.target.href.split('#').last()!
 				}
-				console.log('tag: ', tag)
+				store.dispatch(revealTag(`#${tag.trim()}`))
 			}
 		}, { capture: true, passive: true })
 

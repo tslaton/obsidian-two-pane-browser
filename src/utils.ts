@@ -34,8 +34,21 @@ export function deepcopy(obj: any) {
   return JSON.parse(JSON.stringify(obj))
 }
 
-export function sortedEntries(obj: any) {
-  return Object.entries(obj).sort((a, b) => a[0].localeCompare(b[0]))
+export function isSubset(a: Iterable<any>, b: Iterable<any>) {
+  const _a = a instanceof Array ? a : [...a]
+  const _b = b instanceof Set ? b : new Set(b)
+  return _a.every(value => _b.has(value))
+}
+
+export function intersection(a: Iterable<any>, b: Iterable<any>) {
+  const _a = a instanceof Array ? a : [...a]
+  const _b = b instanceof Set ? b : new Set(b)
+  return new Set(_a.filter(x => _b.has(x)))
+}
+
+// Unused...
+export function areSetsEqual(a: Set<any>, b: Set<any>) {
+  return a.size === b.size && isSubset(a, b)
 }
 
 export function rgbFromHex(hex: string) {
@@ -45,6 +58,11 @@ export function rgbFromHex(hex: string) {
     g: parseInt(result[2], 16),
     b: parseInt(result[3], 16)
   } : {}
+}
+
+export function alphaColor(hex: string, alpha=0.1) {
+  const { r, g, b } = rgbFromHex(hex)
+  return `rgba(${r},${g},${b},${alpha})`
 }
 
 export function selectElementContent(element: HTMLElement) {
