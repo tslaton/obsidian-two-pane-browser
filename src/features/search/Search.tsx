@@ -1,5 +1,4 @@
 // Libraries
-import { debounce } from 'obsidian'
 import * as React from 'react'
 import styled from '@emotion/styled'
 import { SearchIcon, EditIcon, TagsIcon, SortAscIcon, SortDescIcon } from 'lucide-react'
@@ -7,7 +6,7 @@ import { SearchIcon, EditIcon, TagsIcon, SortAscIcon, SortDescIcon } from 'lucid
 import PluginContext from '../../plugin/PluginContext'
 import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
 import SortOptionsContextMenu from './SortOptionsContextMenu'
-import { selectSortOption } from '../search/searchSlice'
+import { selectSearchQuery, selectSortOption, clearSearchQuery } from '../search/searchSlice'
 import { selectActiveSearchOptions, toggleSearchOption, updateSearchQuery } from '../search/searchSlice'
 import TagFiltersContainer from '../tags/TagFiltersContainer'
 
@@ -19,7 +18,8 @@ export default function Search() {
   const SortIcon = sortOption.direction === 'asc' ? SortAscIcon : SortDescIcon
   const activeOptions = useAppSelector(selectActiveSearchOptions)
   const showSearch = !!activeOptions.find(option => option.id === 'show-search')?.isActive
-  const showTags = !!activeOptions.find(option => option.id === 'show-tag-filters')?.isActive
+  const showTagFilters = !!activeOptions.find(option => option.id === 'show-tag-filters')?.isActive
+  const query = useAppSelector(selectSearchQuery)
 
   function showSortOptionsContextMenu(event: React.MouseEvent) {
     const menu = SortOptionsContextMenu(sortOption)
@@ -37,14 +37,17 @@ export default function Search() {
   function onChangeQuery(event: React.ChangeEvent<HTMLInputElement>) {
     dispatch(updateSearchQuery(event.target.value))
   }
-  const debouncedUpdateSearchQuery = debounce(onChangeQuery, 1000, true)
+
+  function clearQuery() {
+    dispatch(clearSearchQuery())
+  }
 
   function toggleShowTagFilters() {
     dispatch(toggleSearchOption('show-tag-filters'))
   }
 
   return (
-    <StyledSearch {...{showSearch, showTags}}>
+    <StyledSearch { ...{ showSearch, showTagFilters } }>
       <div className="button-bar">
         <div className="clickable-icon" onClick={showSortOptionsContextMenu}>
           <SortIcon size={20} />
@@ -60,13 +63,20 @@ export default function Search() {
         <>
           <div className="search-flex-wrapper">
             <div className="search-input-container">
-              <input type="text" name="scoped-search" onChange={debouncedUpdateSearchQuery} />
+              <input 
+                type="search" 
+                name="scoped-search"
+                placeholder="Type to start search..."
+                value={query}
+                onChange={onChangeQuery} 
+              />
+              {query && <div className="search-input-clear-button" onClick={clearQuery} />}
             </div>
             <div className="clickable-icon" onClick={toggleShowTagFilters}>
               <TagsIcon size={22} />
             </div>
           </div>
-          {showTags && <TagFiltersContainer />}
+          {showTagFilters && <TagFiltersContainer />}
           <hr />
         </>
       }
@@ -76,7 +86,7 @@ export default function Search() {
 
 interface StyledSearchProps {
   showSearch: boolean
-  showTags: boolean
+  showTagFilters: boolean
 }
 
 const StyledSearch = styled.div<StyledSearchProps>`
@@ -108,6 +118,6 @@ const StyledSearch = styled.div<StyledSearchProps>`
   }
   
   .lucide-tags {
-    color: ${props => props.showTags ? 'var(--color-accent)' : 'inherit'};
+    color: ${props => props.showTagFilters ? 'var(--color-accent)' : 'inherit'};
   }
 `

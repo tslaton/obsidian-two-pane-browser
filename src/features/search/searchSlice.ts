@@ -42,6 +42,9 @@ export const searchSlice = createSlice({
     updateSearchQuery(state, action: PayloadAction<string>) {
       state.query = action.payload
     },
+    clearSearchQuery(state) {
+      state.query = ''
+    },
     toggleSearchOption(state, action: PayloadAction<string>) {
       const id = action.payload
       const option = state.options.find(option => option.id === id)
@@ -62,7 +65,10 @@ export const searchSlice = createSlice({
   },
 })
 
-export const { updateSearchQuery, toggleSearchOption, setSortOption } = searchSlice.actions
+export const { 
+  updateSearchQuery, clearSearchQuery,
+  toggleSearchOption, setSortOption, 
+} = searchSlice.actions
 
 export const selectSearchQuery = (state: RootState) => state.search.query
 
