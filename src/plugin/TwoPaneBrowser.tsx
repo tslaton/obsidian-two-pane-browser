@@ -85,8 +85,13 @@ export default function TwoPaneBrowser() {
       </div>
       <div className="right-pane">
         <Search />
-        <div className="section-title">
-          Files
+        <div className="flex-section-title-wrapper">
+          <div className="section-title">
+            Files
+          </div>
+          <div className="file-count">
+            {filesInScope.length}
+          </div>
         </div>
         <div className="scroller">
           {filesInScope.map(file =>
@@ -118,6 +123,11 @@ const StyledTwoPaneBrowser = styled.div`
     overflow: hidden;
     display: flex;
     flex-direction: column;
+
+    .file-count { 
+      line-height: 24px;
+      color: var(--text-faint);
+    }
   }
 
   .section-title {
