@@ -84,6 +84,10 @@ const StyledTagFiltersContainer = styled.div`
     background: none;
     box-shadow: none;
     appearance: auto;
+
+    &:hover {
+      background-color: var(--nav-item-background-hover);
+    }
   }
 
   .tag-filters-flex-controls {
