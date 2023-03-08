@@ -26,11 +26,17 @@ export default function TagCategory(props: TagCategoryFilter) {
 }
 
 const StyledTagCategory = styled.div<TagCategoryFilter>`
-  height: 20px;
+  height: ${props => 2*(props.size || 10)}px;
 
   circle {
     stroke-width: ${props => props.isActive ? '3px' : '0px'};
     stroke: ${props => props.color};
-    fill: ${props => props.isActive ? alphaColor(props.color) : props.color}
+    fill: ${props => props.isActive ? alphaColor(props.color, 0.5) : props.color};
+
+    &:hover {
+      stroke-width: 3px;
+      stroke: ${props => alphaColor(props.color, 0.6)};
+      fill: ${props => alphaColor(props.color, 0.6)};
+    }
   }
 `

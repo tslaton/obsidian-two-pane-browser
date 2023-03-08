@@ -2,12 +2,13 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit'
 // Modules
 import type { RootState } from '../../plugin/store'
-import { selectFilesInScope } from '../files/filesSlice'
+import { InteractiveFile, selectFilesInScope } from '../files/filesSlice'
+import { selectSortedFilesInScope } from '../search/searchSlice'
 import { 
   TwoPaneBrowserSettings, loadSettings,
   TagCategory, selectTagCategories,
 } from '../settings/settingsSlice'
-import { isSubset } from '../../utils'
+import { isSubset, intersection } from '../../utils'
 
 export interface TagCategoryFilter {
   name: string
@@ -32,6 +33,10 @@ export const tagFiltersSlice = createSlice({
     matchMode: 'all' as 'all' | 'any',
   },
   reducers: {
+    updateMatchMode(state, action: PayloadAction<'all' | 'any'>) {
+      const mode = action.payload
+      state.matchMode = mode
+    },
     toggleTagCategoryFilter(state, action: PayloadAction<string>) {
       const tagCategoryName = action.payload
       const tagCategoryNameIndex = state.activeTagCategoryNames.indexOf(tagCategoryName)
@@ -109,7 +114,7 @@ export const tagFiltersSlice = createSlice({
 })
 
 export const { 
-  toggleTagCategoryFilter, toggleTagFilter, 
+  updateMatchMode, toggleTagCategoryFilter, toggleTagFilter, 
   reconcileActiveTagCategoryNames, reconcileFilteredTagNames, clearTagFilters, 
 } = tagFiltersSlice.actions
 
@@ -181,7 +186,7 @@ export const selectTagFiltersInScope = createSelector(
         }
         tagFiltersInScope.push({
           name: tagName,
-          color: tagCategoryByTagName[tagName]?.style?.color || 'var(--color-accent)',
+          color: tagCategoryByTagName[tagName]?.style?.color,
           status,
         })
       }
@@ -225,6 +230,31 @@ export const selectTagCategoryFiltersInScope = createSelector(
 export const selectMatchMode = createSelector(
   selectTagFilters,
   tagFilters => tagFilters.matchMode
+)
+
+export const selectTagFilteredFilesInScope = createSelector(
+  selectSortedFilesInScope,
+  selectMatchMode,
+  selectIncludeTagNames,
+  selectExcludeTagNames,
+  (sortedFilesInScope, matchMode, includeTagNames, excludeTagNames) => {
+    const tagFilteredFilesInScope: InteractiveFile[] = []
+    const filtersAreActive = (includeTagNames.length + excludeTagNames.length) > 0
+    for (let file of sortedFilesInScope) {
+      const tagNames = file.tags
+      const isIncluded = matchMode === 'all'
+        ? isSubset(includeTagNames, tagNames)
+        : intersection(includeTagNames, tagNames).size > 0
+      const isExcluded = intersection(excludeTagNames, tagNames).size > 0
+      const isMatch = matchMode === 'all'
+        ? isIncluded && !isExcluded
+        : !filtersAreActive || isIncluded || (excludeTagNames.length !== 0 && !isExcluded)
+      if (isMatch) {
+        tagFilteredFilesInScope.push(file)
+      }
+    }
+    return tagFilteredFilesInScope
+  }
 )
 
 export default tagFiltersSlice.reducer

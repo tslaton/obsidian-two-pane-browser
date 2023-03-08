@@ -40,6 +40,17 @@ export function isSubset(a: Iterable<any>, b: Iterable<any>) {
   return _a.every(value => _b.has(value))
 }
 
+export function intersection(a: Iterable<any>, b: Iterable<any>) {
+  const _a = a instanceof Array ? a : [...a]
+  const _b = b instanceof Set ? b : new Set(b)
+  return new Set(_a.filter(x => _b.has(x)))
+}
+
+// Unused...
+export function areSetsEqual(a: Set<any>, b: Set<any>) {
+  return a.size === b.size && isSubset(a, b)
+}
+
 export function rgbFromHex(hex: string) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
   return result ? {

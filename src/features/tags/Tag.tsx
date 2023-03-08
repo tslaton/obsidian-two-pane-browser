@@ -4,6 +4,7 @@ import styled from '@emotion/styled'
 // Modules
 import { useAppDispatch } from '../../plugin/hooks'
 import { TagFilter, toggleTagFilter } from './tagFiltersSlice'
+import { alphaColor } from '../../utils'
 
 export default function Tag(props: TagFilter) {
   const { name, status } = props
@@ -43,8 +44,18 @@ export default function Tag(props: TagFilter) {
 }
 
 const StyledTag = styled.div<TagFilter>`
+	&.tag {
+		cursor: pointer;
+	}
+
+	&.tag-filter:hover {
+		span {
+			background-color: ${props => props.color ? alphaColor(props.color, 0.2) : 'hsla(var(--color-accent-hsl), 0.2)'};
+		}
+	}
+
 	span.include {
-		border-color: ${props => props.color};
+		border-color: ${props => props.color ? props.color : 'var(--color-accent)'};
 
 		&.cm-hashtag-begin {
 			border-width: 2px 0 2px 2px;

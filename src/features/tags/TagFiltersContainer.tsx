@@ -8,7 +8,7 @@ import TagCategory from '../tags/TagCategory'
 import Tag from '../tags/Tag'
 import { 
   selectTagCategoryFiltersInScope, selectTagFiltersInScope, selectAnyTagFiltersAreApplied,
-  selectTagCategoryNamesInScope, selectTagNamesInScope, 
+  selectTagCategoryNamesInScope, selectTagNamesInScope, selectMatchMode, updateMatchMode,
   reconcileActiveTagCategoryNames, reconcileFilteredTagNames, clearTagFilters, 
 } from '../tags/tagFiltersSlice'
 
@@ -17,6 +17,7 @@ export default function TagFiltersContainer() {
   const tagCategoryFilters = useAppSelector(selectTagCategoryFiltersInScope)
   const tagFilters = useAppSelector(selectTagFiltersInScope)
   const anyTagFiltersAreApplied = useAppSelector(selectAnyTagFiltersAreApplied)
+  const matchMode = useAppSelector(selectMatchMode)
 
   // Clean up state for tags that leave scope
   const tagCategoryNamesInScope = useAppSelector(selectTagCategoryNamesInScope)
@@ -33,11 +34,16 @@ export default function TagFiltersContainer() {
     dispatch(clearTagFilters())
   }
 
+  function onChangeMatchMode(event: React.ChangeEvent<HTMLSelectElement>) {
+    const newMatchMode = event.target.value as 'any' | 'all'
+    dispatch(updateMatchMode(newMatchMode))
+  }
+
   return (
     <StyledTagFiltersContainer>
       <div className="tag-filters-flex-controls">
         <label htmlFor="tag-filter-options">Match:</label>
-        <select id="tag-filter-options">
+        <select id="tag-filter-options" value={matchMode} onChange={onChangeMatchMode}>
           <option value="all">All Selected</option>
           <option value="any">Any Selected</option>
         </select>
@@ -92,6 +98,7 @@ const StyledTagFiltersContainer = styled.div`
     display: flex;
     flex-direction: horizontal;
     flex-wrap: wrap;
+    align-items: center;
     column-gap: 4px;
     row-gap: 8px;
     padding: 2px 2px;
