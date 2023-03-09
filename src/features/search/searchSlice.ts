@@ -16,13 +16,6 @@ import { revealTag } from '../tags/extraActions'
 // - sort list of files by SearchResult.score
 
 // Ref: https://discord.com/channels/686053708261228577/840286264964022302/1078375455826120895
-
-interface SearchOption {
-  id: string
-  name: string
-  isActive: boolean
-}
-
 export interface SortOption {
   property: 'filename' | 'mtime' | 'ctime'
   direction: 'asc' | 'desc'
@@ -32,10 +25,11 @@ export const searchSlice = createSlice({
   name: 'search',
   initialState: {
     query: '',
-    options: [
-      { id: 'show-search', name: 'Show Search', isActive: false },
-      { id: 'show-tag-filters', name: 'Show Tag Filters', isActive: false },
-    ] as SearchOption[],
+    options: {
+      showSearch: { name: 'Show Search', isActive: false },
+      showTagFilters: { name: 'Show Tag Filters', isActive: false },
+      matchCase: { name: 'Match Case', isActive: false },
+    },
     sort: { property: 'mtime', direction: 'desc' } as SortOption,
   },
   reducers: {
@@ -45,12 +39,14 @@ export const searchSlice = createSlice({
     clearSearchQuery(state) {
       state.query = ''
     },
-    toggleSearchOption(state, action: PayloadAction<string>) {
-      const id = action.payload
-      const option = state.options.find(option => option.id === id)
-      if (option) {
-        option.isActive = !option.isActive
-      }
+    toggleShowSearch(state) {
+      state.options.showSearch.isActive = !state.options.showSearch.isActive
+    },
+    toggleShowTagFilters(state) {
+      state.options.showTagFilters.isActive = !state.options.showTagFilters.isActive
+    },
+    toggleMatchCase(state) {
+      state.options.matchCase.isActive = !state.options.matchCase.isActive
     },
     setSortOption(state, action: PayloadAction<SortOption>) {
       state.sort = action.payload
@@ -59,25 +55,20 @@ export const searchSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(revealTag, (state) => {
-        state.options[0].isActive = true
-        state.options[1].isActive = true
+        state.options.showSearch.isActive = true
+        state.options.showTagFilters.isActive = true
       })
   },
 })
 
 export const { 
   updateSearchQuery, clearSearchQuery,
-  toggleSearchOption, setSortOption, 
+  toggleShowSearch, toggleShowTagFilters, toggleMatchCase, setSortOption, 
 } = searchSlice.actions
 
 export const selectSearchQuery = (state: RootState) => state.search.query
 
 export const selectSearchOptions = (state: RootState) => state.search.options
-
-export const selectActiveSearchOptions = createSelector(
-  selectSearchOptions,
-  options => options.filter(option => option.isActive === true)
-)
 
 export const selectSortOption = (state: RootState) => state.search.sort
 

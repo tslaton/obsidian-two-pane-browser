@@ -5,9 +5,10 @@ import { SearchIcon, EditIcon, TagsIcon, SortAscIcon, SortDescIcon } from 'lucid
 // Modules
 import PluginContext from '../../plugin/PluginContext'
 import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
+import ObsidianIcon from '../../common/ObsidianIcon'
 import SortOptionsContextMenu from './SortOptionsContextMenu'
 import { selectSearchQuery, selectSortOption, clearSearchQuery } from '../search/searchSlice'
-import { selectActiveSearchOptions, toggleSearchOption, updateSearchQuery } from '../search/searchSlice'
+import { selectSearchOptions, toggleShowSearch, toggleShowTagFilters, toggleMatchCase, updateSearchQuery } from '../search/searchSlice'
 import TagFiltersContainer from '../tags/TagFiltersContainer'
 
 // For clicking tags: https://discord.com/channels/686053708261228577/840286264964022302/1077674157107576872
@@ -16,9 +17,10 @@ export default function Search() {
   const dispatch = useAppDispatch()
   const sortOption = useAppSelector(selectSortOption)
   const SortIcon = sortOption.direction === 'asc' ? SortAscIcon : SortDescIcon
-  const activeOptions = useAppSelector(selectActiveSearchOptions)
-  const showSearch = !!activeOptions.find(option => option.id === 'show-search')?.isActive
-  const showTagFilters = !!activeOptions.find(option => option.id === 'show-tag-filters')?.isActive
+  const searchOptions = useAppSelector(selectSearchOptions)
+  const showSearch = searchOptions.showSearch.isActive
+  const showTagFilters = searchOptions.showTagFilters.isActive
+  const matchCaseOn = searchOptions.matchCase.isActive
   const query = useAppSelector(selectSearchQuery)
 
   function showSortOptionsContextMenu(event: React.MouseEvent) {
@@ -26,11 +28,19 @@ export default function Search() {
     menu.showAtMouseEvent(event.nativeEvent)
   }
 
-  function toggleShowSearch() {
-    dispatch(toggleSearchOption('show-search'))
+  function onClickShowSearch() {
+    dispatch(toggleShowSearch())
   }
 
-  function createNewDocument() {
+  function onClickShowTagFilters() {
+    dispatch(toggleShowTagFilters())
+  }
+
+  function onClickMatchCase() {
+    dispatch(toggleMatchCase())
+  }
+
+  function onClickCreateFile() {
     plugin.createFile()
   }
 
@@ -38,24 +48,28 @@ export default function Search() {
     dispatch(updateSearchQuery(event.target.value))
   }
 
-  function clearQuery() {
+  function onClickClearQuery() {
     dispatch(clearSearchQuery())
   }
 
-  function toggleShowTagFilters() {
-    dispatch(toggleSearchOption('show-tag-filters'))
-  }
-
   return (
-    <StyledSearch { ...{ showSearch, showTagFilters } }>
+    <StyledSearch { ...{ showSearch, showTagFilters, matchCaseOn } }>
       <div className="button-bar">
         <div className="clickable-icon" onClick={showSortOptionsContextMenu}>
           <SortIcon size={20} />
         </div>
-        <div className="clickable-icon" onClick={toggleShowSearch}>
+        {showSearch &&
+          <ObsidianIcon
+            iconName='uppercase-lowercase-a'
+            size={20}
+            isActive={matchCaseOn}
+            onClick={onClickMatchCase}
+          />
+        }
+        <div className="clickable-icon" onClick={onClickShowSearch}>
           <SearchIcon size={20} />
         </div>
-        <div className="clickable-icon" onClick={createNewDocument}>
+        <div className="clickable-icon" onClick={onClickCreateFile}>
           <EditIcon size={20} />
         </div>
       </div>
@@ -70,9 +84,9 @@ export default function Search() {
                 value={query}
                 onChange={onChangeQuery} 
               />
-              {query && <div className="search-input-clear-button" onClick={clearQuery} />}
+              {query && <div className="search-input-clear-button" onClick={onClickClearQuery} />}
             </div>
-            <div className="clickable-icon" onClick={toggleShowTagFilters}>
+            <div className="clickable-icon" onClick={onClickShowTagFilters}>
               <TagsIcon size={22} />
             </div>
           </div>
@@ -87,6 +101,7 @@ export default function Search() {
 interface StyledSearchProps {
   showSearch: boolean
   showTagFilters: boolean
+  matchCaseOn: boolean
 }
 
 const StyledSearch = styled.div<StyledSearchProps>`
