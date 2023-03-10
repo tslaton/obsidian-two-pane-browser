@@ -13,6 +13,7 @@ import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, loadSettings } from './featur
 import { FileMeta, loadFiles, addFile, updateFile, removeFile, activateFile } from './features/files/filesSlice'
 import { FolderMeta, loadFolders, addFolder, updateFolder, removeFolder, awaitRenameFolder } from './features/folders/foldersSlice'
 import { revealTag } from './features/tags/extraActions'
+import { requestSearchResults, fulfillSearchResults, failSearchResults } from './features/search/searchSlice'
 import { getParentPath, selectElementContent } from './utils'
 
 export default class TwoPaneBrowserPlugin extends Plugin {
@@ -171,47 +172,48 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		store.dispatch(loadSettings(settings))
 	}
 
-	async inflatedFileMetaFromTFile(file: TFile, fileCache: CachedMetadata|null=null): Promise<FileMeta> {
+	// FUTURE: leverage cache.sections to do Headers in previews
+	// FUTURE: process only the beginning of a potentially long string
+	// Ref: https://www.theinformationlab.co.uk/2020/01/03/regex-extracting-the-first-n-words/
+	async getFilePreview(file: TFile, numLines=2) {
 		const contents = await app.vault.cachedRead(file)
-		// FUTURE: leverage cache.sections to do Headers in previews
-		// FUTURE: process only the beginning of a potentially long string
-		// Ref: https://www.theinformationlab.co.uk/2020/01/03/regex-extracting-the-first-n-words/
-		const createFilePreview = (numLines=2) => {
-			let preview = ''
-			const lines = contents.split('\n')
-			let lineCount = 0
-			for (let line of lines) {
-				if (lineCount >= numLines) {
-					break
-				}
-				// Strip out tags and afterward, blank lines
-				line = line.replace(/#\S+/g, '').replace(/\s+/g, ' ').trim()
-				if (line) {
-					preview += `${line}\n`
-					lineCount += 1
-				}
+		let preview = ''
+		const lines = contents.split('\n')
+		let lineCount = 0
+		for (let line of lines) {
+			if (lineCount >= numLines) {
+				break
 			}
-			return preview.trim()
+			// Strip out tags and afterward, blank lines
+			line = line.replace(/#\S+/g, '').replace(/\s+/g, ' ').trim()
+			if (line) {
+				preview += `${line}\n`
+				lineCount += 1
+			}
 		}
+		return preview.trim()
+	}
+
+	getFileTags(file: TFile, fileCache: CachedMetadata|null=null) {
 		// https://stackoverflow.com/a/71896674
-		const getTags = () => {
-			const allTags = new Set<string>()
-			if (!fileCache) {
-				fileCache = this.app.metadataCache.getFileCache(file)
-			} 
-			if (fileCache) {
-				const tags = getAllTags(fileCache) || []
-				for (let tag of tags) {
-					allTags.add(tag)
-				}
+		const allTags = new Set<string>()
+		if (!fileCache) {
+			fileCache = this.app.metadataCache.getFileCache(file)
+		} 
+		if (fileCache) {
+			const tags = getAllTags(fileCache) || []
+			for (let tag of tags) {
+				allTags.add(tag)
 			}
-			return [...allTags]
 		}
-		return {
-			...this.fileMetaFromTFile(file),
-			preview: createFilePreview(),
-			tags: getTags(),
-		}
+		return [...allTags]
+	}
+
+	async inflatedFileMetaFromTFile(f: TFile, fileCache: CachedMetadata|null=null) {
+		const file = this.fileMetaFromTFile(f)
+		file.preview = await this.getFilePreview(f)
+		file.tags = this.getFileTags(f)
+		return file
 	}
 
 	fileMetaFromTFile(file: TFile): FileMeta {
@@ -316,4 +318,44 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		}
 		fileLeaf.openFile(f)
 	}
+
+	async search(paths: string[], query: string, matchCase=false) {
+		store.dispatch(requestSearchResults())
+		try {
+			const files = paths.map(path => this.app.vault.getAbstractFileByPath(path))
+			const tokens = query.split(' ').map(t => t.trim())
+			const flags = matchCase ? 'g' : 'ig'
+			const results: FileMeta[] = []
+			for (let file of files) {
+				if (file && file instanceof TFile) {
+					const contents = await app.vault.cachedRead(file)
+					let totalMatches = 0
+					let matchedAllTokens = true
+					for (let token of tokens) {
+						const regex = RegExp(token, flags)
+						const titleMatches = file.name.match(regex)
+						const matches = contents.match(regex)
+						const numMatches = (titleMatches ? titleMatches.length : 0) + (matches ? matches.length : 0)
+						matchedAllTokens = matchedAllTokens && numMatches > 0
+						totalMatches += numMatches
+					}
+					if (matchedAllTokens) {
+						const result = this.fileMetaFromTFile(file)
+						result.preview = totalMatches === 1
+							? 'Contains 1 match'
+							: `Contains ${totalMatches} matches`
+						result.tags = this.getFileTags(file)
+						results.push(result)
+					}
+				}
+			}
+			store.dispatch(fulfillSearchResults(results))
+		}
+		catch(error: unknown) {
+			const message = error instanceof Error
+				? error.message
+				: 'Unknown error'
+			store.dispatch(failSearchResults(message))
+		}
+	}	
 }

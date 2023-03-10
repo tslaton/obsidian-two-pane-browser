@@ -10,6 +10,7 @@ import SortOptionsContextMenu from './SortOptionsContextMenu'
 import { selectSearchQuery, selectSortOption, clearSearchQuery } from '../search/searchSlice'
 import { selectSearchOptions, toggleShowSearch, toggleShowTagFilters, toggleMatchCase, updateSearchQuery } from '../search/searchSlice'
 import TagFiltersContainer from '../tags/TagFiltersContainer'
+import { selectFilesInScope } from '../files/filesSlice'
 
 // For clicking tags: https://discord.com/channels/686053708261228577/840286264964022302/1077674157107576872
 export default function Search() {
@@ -22,6 +23,8 @@ export default function Search() {
   const showTagFilters = searchOptions.showTagFilters.isActive
   const matchCaseOn = searchOptions.matchCase.isActive
   const query = useAppSelector(selectSearchQuery)
+  const filesInScope = useAppSelector(selectFilesInScope)
+  const filePathsInScope = filesInScope.map(f => f.path)
 
   function showSortOptionsContextMenu(event: React.MouseEvent) {
     const menu = SortOptionsContextMenu(sortOption)
@@ -52,6 +55,11 @@ export default function Search() {
     dispatch(clearSearchQuery())
   }
 
+  function onSubmitQuery(event: React.FormEvent) {
+    event.preventDefault()
+    plugin.search(filePathsInScope, query, matchCaseOn)
+  }
+
   return (
     <StyledSearch { ...{ showSearch, showTagFilters, matchCaseOn } }>
       <div className="button-bar">
@@ -77,13 +85,15 @@ export default function Search() {
         <>
           <div className="search-flex-wrapper">
             <div className="search-input-container">
-              <input 
-                type="search" 
-                name="scoped-search"
-                placeholder="Type to start search..."
-                value={query}
-                onChange={onChangeQuery} 
-              />
+              <form onSubmit={onSubmitQuery}>
+                <input 
+                  type="search" 
+                  name="scoped-search"
+                  placeholder="Type to start search..."
+                  value={query}
+                  onChange={onChangeQuery} 
+                />
+              </form>
               {query && <div className="search-input-clear-button" onClick={onClickClearQuery} />}
             </div>
             <div className="clickable-icon" onClick={onClickShowTagFilters}>

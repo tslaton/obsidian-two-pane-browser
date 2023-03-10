@@ -2,7 +2,7 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit'
 // Modules
 import type { RootState } from '../../plugin/store'
-import { selectFilesInScope } from '../files/filesSlice'
+import { FileMeta, InteractiveFile, selectFilesInScope } from '../files/filesSlice'
 import { revealTag } from '../tags/extraActions'
 
 // Search recipe (credit to liam on Discord)
@@ -21,6 +21,8 @@ export interface SortOption {
   direction: 'asc' | 'desc'
 }
 
+type resultsStatus = 'requested' | 'fulfilled' | 'failed' | null 
+
 export const searchSlice = createSlice({
   name: 'search',
   initialState: {
@@ -31,6 +33,11 @@ export const searchSlice = createSlice({
       matchCase: { name: 'Match Case', isActive: false },
     },
     sort: { property: 'mtime', direction: 'desc' } as SortOption,
+    results: {
+      status: null as resultsStatus,
+      files: [] as InteractiveFile[],
+      error: null as string | null,
+    },
   },
   reducers: {
     updateSearchQuery(state, action: PayloadAction<string>) {
@@ -38,6 +45,11 @@ export const searchSlice = createSlice({
     },
     clearSearchQuery(state) {
       state.query = ''
+      state.results = {
+        status: null,
+        files: [],
+        error: null,
+      }
     },
     toggleShowSearch(state) {
       state.options.showSearch.isActive = !state.options.showSearch.isActive
@@ -51,6 +63,32 @@ export const searchSlice = createSlice({
     setSortOption(state, action: PayloadAction<SortOption>) {
       state.sort = action.payload
     },
+    // TODO: Refactor as asyncThunk; for now plugin will direct this cycle
+    requestSearchResults(state) {
+      state.results = {
+        status: 'requested',
+        files: [],
+        error: null,
+      }
+    },
+    fulfillSearchResults(state, action: PayloadAction<FileMeta[]>) {
+      const files: InteractiveFile[] = action.payload.map(f => ({
+        ...f, isActive: false, isSelected: false, isAwaitingRename: false,
+      }))
+      state.results = {
+        status: 'fulfilled',
+        files,
+        error: null,
+      }
+    },
+    failSearchResults(state, action: PayloadAction<string>) {
+      const error = action.payload
+      state.results = {
+        status: 'failed',
+        files: [],
+        error,
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -63,7 +101,8 @@ export const searchSlice = createSlice({
 
 export const { 
   updateSearchQuery, clearSearchQuery,
-  toggleShowSearch, toggleShowTagFilters, toggleMatchCase, setSortOption, 
+  toggleShowSearch, toggleShowTagFilters, toggleMatchCase, setSortOption,
+  requestSearchResults, fulfillSearchResults, failSearchResults,
 } = searchSlice.actions
 
 export const selectSearchQuery = (state: RootState) => state.search.query
@@ -71,6 +110,8 @@ export const selectSearchQuery = (state: RootState) => state.search.query
 export const selectSearchOptions = (state: RootState) => state.search.options
 
 export const selectSortOption = (state: RootState) => state.search.sort
+
+export const selectSearchResults = (state: RootState) => state.search.results
 
 export const selectSortedFilesInScope = createSelector(
   selectFilesInScope,
@@ -92,6 +133,14 @@ export const selectSortedFilesInScope = createSelector(
       }
     })
   }
+)
+
+export const selectQueriedFilesInScope = createSelector(
+  selectSortedFilesInScope,
+  selectSearchResults,
+  (sortedFilesInScope, searchResults) => searchResults.files.length > 0 
+    ? searchResults.files
+    : sortedFilesInScope
 )
 
 export default searchSlice.reducer
