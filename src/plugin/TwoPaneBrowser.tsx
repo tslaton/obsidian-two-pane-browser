@@ -12,6 +12,7 @@ import FilePreview from '../features/files/FilePreview'
 import Filter from '../features/filters/Filter'
 import { selectFilters } from '../features/filters/filtersSlice'
 import Search from '../features/search/Search'
+import { selectSearchInputHasFocus } from '../features/search/searchSlice'
 import { selectTagCategoryByTagName, selectTagFilteredFilesInScope } from '../features/tags/tagFiltersSlice'
 import { alphaColor } from '../utils'
 
@@ -40,10 +41,13 @@ export default function TwoPaneBrowser() {
   // TODO: Decide if this behavior is actually desired
   // It is slighty annoying if you just want to browse files vs. the open one
   // However, you could always open your "compare" file in a tab or pane first
+  const searchInputHasFocus = useAppSelector(selectSearchInputHasFocus)
   React.useEffect(() => {
-    const activeFile = filesInScope.find(file => file.isActive)
-    if (!activeFile && filesInScope.length > 0) {
-      plugin.openFile(filesInScope[0])
+    if (!searchInputHasFocus) {
+      const activeFile = filesInScope.find(file => file.isActive)
+      if (!activeFile && filesInScope.length > 0) {
+        plugin.openFile(filesInScope[0])
+      }
     }
   }, [filesInScope])
 

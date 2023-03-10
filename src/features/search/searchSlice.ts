@@ -27,6 +27,7 @@ export const searchSlice = createSlice({
   name: 'search',
   initialState: {
     query: '',
+    searchInputHasFocus: false,
     options: {
       showSearch: { name: 'Show Search', isActive: false },
       showTagFilters: { name: 'Show Tag Filters', isActive: false },
@@ -41,7 +42,15 @@ export const searchSlice = createSlice({
   },
   reducers: {
     updateSearchQuery(state, action: PayloadAction<string>) {
-      state.query = action.payload
+      const query = action.payload
+      state.query = query
+      if (query === '') {
+        state.results = {
+          status: null,
+          files: [],
+          error: null,
+        }
+      }
     },
     clearSearchQuery(state) {
       state.query = ''
@@ -50,6 +59,9 @@ export const searchSlice = createSlice({
         files: [],
         error: null,
       }
+    },
+    setSearchInputHasFocus(state, action: PayloadAction<boolean>) {
+      state.searchInputHasFocus = action.payload
     },
     toggleShowSearch(state) {
       state.options.showSearch.isActive = !state.options.showSearch.isActive
@@ -100,12 +112,14 @@ export const searchSlice = createSlice({
 })
 
 export const { 
-  updateSearchQuery, clearSearchQuery,
+  updateSearchQuery, clearSearchQuery, setSearchInputHasFocus,
   toggleShowSearch, toggleShowTagFilters, toggleMatchCase, setSortOption,
   requestSearchResults, fulfillSearchResults, failSearchResults,
 } = searchSlice.actions
 
 export const selectSearchQuery = (state: RootState) => state.search.query
+
+export const selectSearchInputHasFocus = (state: RootState) => state.search.searchInputHasFocus
 
 export const selectSearchOptions = (state: RootState) => state.search.options
 
