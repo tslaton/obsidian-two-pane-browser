@@ -1,4 +1,5 @@
 // Libraries
+import { debounce } from 'obsidian'
 import * as React from 'react'
 import styled from '@emotion/styled'
 import { SearchIcon, EditIcon, TagsIcon, SortAscIcon, SortDescIcon } from 'lucide-react'
@@ -27,8 +28,15 @@ export function Search() {
     searchInputRef.current!.focus()
   }, [])
 
+  // const debouncedExecuteSearch = debounce(() => {
+  //   if (query) {
+  //     plugin.search(filePathsInScope, query, matchCaseOn)
+  //   }
+  // }, 500, true)
+
   function onChangeQuery(event: React.ChangeEvent<HTMLInputElement>) {
     dispatch(updateSearchQuery(event.target.value))
+    // debouncedExecuteSearch()
   }
 
   function onClickClearQuery() {
