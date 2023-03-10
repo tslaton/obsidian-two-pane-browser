@@ -2,7 +2,6 @@
 import * as React from 'react'
 import { css, Global } from '@emotion/react'
 import styled from '@emotion/styled'
-import { FolderPlus } from 'lucide-react'
 // Modules
 import { useAppSelector } from './hooks'
 import PluginContext from './PluginContext'
@@ -14,6 +13,7 @@ import { selectFilters } from '../features/filters/filtersSlice'
 import Search from '../features/search/Search'
 import { selectSearchInputHasFocus } from '../features/search/searchSlice'
 import { selectTagCategoryByTagName, selectTagFilteredFilesInScope } from '../features/tags/tagFiltersSlice'
+import ObsidianIcon from '../common/ObsidianIcon'
 import { alphaColor } from '../utils'
 
 export default function TwoPaneBrowser() {
@@ -77,9 +77,7 @@ export default function TwoPaneBrowser() {
           <div className="section-title">
             Folders
           </div>
-          <div className="clickable-icon" onClick={addNewTopLevelFolder}>
-            <FolderPlus size={18} />
-          </div>
+          <ObsidianIcon iconName="folder-plus" onClick={addNewTopLevelFolder} />
         </div>
         <div className="scroller">
           {topLevelFolders.map(folder =>

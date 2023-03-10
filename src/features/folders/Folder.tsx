@@ -1,7 +1,6 @@
 // Libraries
 import * as React from 'react'
 import styled from '@emotion/styled'
-import { FolderIcon, FolderOpenIcon } from 'lucide-react'
 // Modules
 import PluginContext from '../../plugin/PluginContext'
 import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
@@ -14,6 +13,7 @@ import {
 } from './foldersSlice'
 import { makeSelectFileCountByFolder } from '../files/filesSlice'
 import { deactivateAllFilters } from '../filters/filtersSlice'
+import ObsidianIcon from '../../common/ObsidianIcon'
 
 interface FolderProps {
   folder: InteractiveFolder
@@ -24,7 +24,7 @@ export default function Folder(props: FolderProps) {
   const { folder, level } = props
   const plugin = React.useContext(PluginContext)
   const dispatch = useAppDispatch()
-  const Icon = folder.isExpanded ? FolderOpenIcon : FolderIcon
+  const iconName = folder.isExpanded ? 'folder-open' : 'folder-closed'
   const selectChildFoldersByParentPath = React.useMemo(makeSelectChildFoldersByParentPath, [])
   const childFolders = useAppSelector(state => selectChildFoldersByParentPath(state, folder.path))
   const selectFileCountByFolder = React.useMemo(makeSelectFileCountByFolder, [])
@@ -57,9 +57,7 @@ export default function Folder(props: FolderProps) {
         onClick={toggleIsSelected} 
         onContextMenu={onContextMenu}
       >
-        <div className="clickable-icon" onClick={toggleIsExpanded}>
-          <Icon size={18} />
-        </div>
+        <ObsidianIcon iconName={iconName} onClick={toggleIsExpanded} />
         <EditableName
           className="folder-name"
           name={folder.name}

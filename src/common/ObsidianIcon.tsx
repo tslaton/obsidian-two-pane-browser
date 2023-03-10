@@ -19,11 +19,11 @@ export default function ObsidianIcon(props: ObsidianIconProps) {
   const containerRef = React.useRef<HTMLDivElement>(null)
   
   React.useEffect(() => {
-    if (containerRef.current && !containerRef.current.firstChild) {
-      const svg = getIcon(iconName)!
-      containerRef.current.appendChild(svg)
+    if (containerRef.current) {
+      const svg = getIcon(iconName)! as Node
+      containerRef.current.replaceChildren(svg)
     }
-  }, [])
+  }, [iconName])
 
   const classes = classNames('clickable-icon', { active: isActive }, className)
   const styles = css`
