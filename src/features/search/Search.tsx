@@ -2,7 +2,6 @@
 import { debounce } from 'obsidian'
 import * as React from 'react'
 import styled from '@emotion/styled'
-import { SearchIcon, EditIcon, TagsIcon, SortAscIcon, SortDescIcon } from 'lucide-react'
 // Modules
 import PluginContext from '../../plugin/PluginContext'
 import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
@@ -78,9 +77,7 @@ export function Search() {
           </form>
           {query && <div className="search-input-clear-button" onClick={onClickClearQuery} />}
         </div>
-        <div className="clickable-icon" onClick={onClickShowTagFilters}>
-          <TagsIcon size={22} />
-        </div>
+        <ObsidianIcon iconName="tags" size={22} isActive={showTagFilters} onClick={onClickShowTagFilters} />
       </div>
       {showTagFilters && <TagFiltersContainer />}
     </>
@@ -91,7 +88,7 @@ export default function SearchContainer() {
   const plugin = React.useContext(PluginContext)
   const dispatch = useAppDispatch()
   const sortOption = useAppSelector(selectSortOption)
-  const SortIcon = sortOption.direction === 'asc' ? SortAscIcon : SortDescIcon
+  const sortIconName = sortOption.direction === 'asc' ? 'sort-asc' : 'sort-desc'
   const searchOptions = useAppSelector(selectSearchOptions)
   const showSearch = searchOptions.showSearch.isActive
   const showTagFilters = searchOptions.showTagFilters.isActive
@@ -117,23 +114,17 @@ export default function SearchContainer() {
   return (
     <StyledSearchContainer { ...{ showSearch, showTagFilters, matchCaseOn } }>
       <div className="button-bar">
-        <div className="clickable-icon" onClick={showSortOptionsContextMenu}>
-          <SortIcon size={20} />
-        </div>
+        <ObsidianIcon iconName={sortIconName} size={20} onClick={showSortOptionsContextMenu} />
         {showSearch &&
           <ObsidianIcon
-            iconName='uppercase-lowercase-a'
+            iconName="uppercase-lowercase-a"
             size={20}
             isActive={matchCaseOn}
             onClick={onClickMatchCase}
           />
         }
-        <div className="clickable-icon" onClick={onClickShowSearch}>
-          <SearchIcon size={20} />
-        </div>
-        <div className="clickable-icon" onClick={onClickCreateFile}>
-          <EditIcon size={20} />
-        </div>
+        <ObsidianIcon iconName="search" size={20} isActive={showSearch} onClick={onClickShowSearch} />
+        <ObsidianIcon iconName="edit" size={20} onClick={onClickCreateFile} />
       </div>
       {showSearch &&
         <>
@@ -173,13 +164,5 @@ const StyledSearchContainer = styled.div<StyledSearchProps>`
     .search-input-container {
       width: 100%;
     }
-  }
-
-  .lucide-search {
-    color: ${props => props.showSearch ? 'var(--color-accent)' : 'inherit'};
-  }
-  
-  .lucide-tags {
-    color: ${props => props.showTagFilters ? 'var(--color-accent)' : 'inherit'};
   }
 `
