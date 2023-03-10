@@ -5,7 +5,8 @@ import { createSelector, createSlice, createEntityAdapter, PayloadAction } from 
 import type { RootState } from '../../plugin/store'
 import { InteractiveFolder, selectPathsInScope } from '../folders/foldersSlice'
 import { selectActiveFilter } from '../filters/filtersSlice'
-import { getParentPath, getDescendantPaths } from '../../utils'
+import { requestSearchResults, fulfillSearchResults, failSearchResults } from '../search/extraActions'
+import { getParentPath, getDescendantPaths, SearchResult } from '../../utils'
 
 export interface FileMeta {
   name: string
@@ -15,10 +16,25 @@ export interface FileMeta {
   tags: string[]
 }
 
+export interface FileSearchResults {
+  titleMatches?: SearchResult
+  contentMatches?: SearchResult[]
+}
+
+export type FileSearchResultsByPath = Record<string, FileSearchResults>
+// Want results that will enable call to editor.setCursor to jump to them in the file
+// https://github.com/obsidianmd/obsidian-api/blob/bceb489fc25ceba5973119d6e57759d64850f90d/obsidian.d.ts#L908
+// to do highlights, Obsidian adds span.is-flashing around matches in editor and span.search-result-file-matched-text around results
+// for each token, find all occurences
+// for each occurence, record the start index (stop is this + token.length)
+// define context size = 150 (say)
+// distribute the contexts over the indices
+// create list of contexts: blah blah blah <span class="search-match" data-editor-index=15>match</span>
 export interface InteractiveFile extends FileMeta {
   isActive: boolean
   isSelected: boolean
   isAwaitingRename: boolean
+  searchResults?: FileSearchResults
 }
 
 const filesAdapter = createEntityAdapter<InteractiveFile>({
@@ -64,6 +80,28 @@ export const filesSlice = createSlice({
       file.isActive = false
     },
   },
+  extraReducers: (builder) => {
+    builder
+      .addCase(requestSearchResults, (state) => {
+        for (let [_, file] of Object.entries(state.entities)) {
+          file!.searchResults = undefined
+        }
+      })
+      .addCase(fulfillSearchResults, (state, action: PayloadAction<FileSearchResultsByPath>) => {
+        const fileSearchResultsByPath = action.payload
+        for (let [path, searchResults] of Object.entries(fileSearchResultsByPath)) {
+          const file = state.entities[path]
+          if (file) {
+            file.searchResults = searchResults
+          }
+        }
+      })
+      .addCase(failSearchResults, (state) => {
+        for (let [_, file] of Object.entries(state.entities)) {
+          file!.searchResults = undefined
+        }
+      })
+  }
 })
 
 export const { 

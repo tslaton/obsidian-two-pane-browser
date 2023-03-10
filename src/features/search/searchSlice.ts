@@ -2,20 +2,10 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit'
 // Modules
 import type { RootState } from '../../plugin/store'
-import { FileMeta, InteractiveFile, selectFilesInScope } from '../files/filesSlice'
+import { selectFilesInScope } from '../files/filesSlice'
 import { revealTag } from '../tags/extraActions'
+import { requestSearchResults, fulfillSearchResults, failSearchResults } from './extraActions'
 
-// Search recipe (credit to liam on Discord)
-// The fuzzySearch function has nothing to do with files, it just lets you fuzzy search for strings. 
-// You'll need to iterate through the files yourself. A basic approach would be:
-
-// - get all files
-// - get query from some input element
-// - prepare fuzzy search using input value
-// - filter files by fuzzy search result
-// - sort list of files by SearchResult.score
-
-// Ref: https://discord.com/channels/686053708261228577/840286264964022302/1078375455826120895
 export interface SortOption {
   property: 'filename' | 'mtime' | 'ctime'
   direction: 'asc' | 'desc'
@@ -36,7 +26,6 @@ export const searchSlice = createSlice({
     sort: { property: 'mtime', direction: 'desc' } as SortOption,
     results: {
       status: null as resultsStatus,
-      files: [] as InteractiveFile[],
       error: null as string | null,
     },
   },
@@ -47,7 +36,6 @@ export const searchSlice = createSlice({
       if (query === '') {
         state.results = {
           status: null,
-          files: [],
           error: null,
         }
       }
@@ -56,7 +44,6 @@ export const searchSlice = createSlice({
       state.query = ''
       state.results = {
         status: null,
-        files: [],
         error: null,
       }
     },
@@ -75,32 +62,6 @@ export const searchSlice = createSlice({
     setSortOption(state, action: PayloadAction<SortOption>) {
       state.sort = action.payload
     },
-    // TODO: Refactor as asyncThunk; for now plugin will direct this cycle
-    requestSearchResults(state) {
-      state.results = {
-        status: 'requested',
-        files: [],
-        error: null,
-      }
-    },
-    fulfillSearchResults(state, action: PayloadAction<FileMeta[]>) {
-      const files: InteractiveFile[] = action.payload.map(f => ({
-        ...f, isActive: false, isSelected: false, isAwaitingRename: false,
-      }))
-      state.results = {
-        status: 'fulfilled',
-        files,
-        error: null,
-      }
-    },
-    failSearchResults(state, action: PayloadAction<string>) {
-      const error = action.payload
-      state.results = {
-        status: 'failed',
-        files: [],
-        error,
-      }
-    },
   },
   extraReducers: (builder) => {
     builder
@@ -108,13 +69,30 @@ export const searchSlice = createSlice({
         state.options.showSearch.isActive = true
         state.options.showTagFilters.isActive = true
       })
+      .addCase(requestSearchResults, (state) => {
+        state.results = {
+          status: 'requested',
+          error: null,
+        }
+      })
+      .addCase(fulfillSearchResults, (state) => {
+        state.results = {
+          status: 'fulfilled',
+          error: null,
+        }
+      })
+      .addCase(failSearchResults, (state, action: PayloadAction<string>) => {
+        state.results = {
+          status: 'failed',
+          error: action.payload,
+        }
+      })
   },
 })
 
 export const { 
   updateSearchQuery, clearSearchQuery, setSearchInputHasFocus,
   toggleShowSearch, toggleShowTagFilters, toggleMatchCase, setSortOption,
-  requestSearchResults, fulfillSearchResults, failSearchResults,
 } = searchSlice.actions
 
 export const selectSearchQuery = (state: RootState) => state.search.query
@@ -147,14 +125,6 @@ export const selectSortedFilesInScope = createSelector(
       }
     })
   }
-)
-
-export const selectQueriedFilesInScope = createSelector(
-  selectSortedFilesInScope,
-  selectSearchResults,
-  (sortedFilesInScope, searchResults) => searchResults.files.length > 0 
-    ? searchResults.files
-    : sortedFilesInScope
 )
 
 export default searchSlice.reducer

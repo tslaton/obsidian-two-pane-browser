@@ -3,7 +3,7 @@ import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit'
 // Modules
 import type { RootState } from '../../plugin/store'
 import { InteractiveFile, selectFilesInScope } from '../files/filesSlice'
-import { selectQueriedFilesInScope, selectSortedFilesInScope } from '../search/searchSlice'
+import { selectSortedFilesInScope } from '../search/searchSlice'
 import { 
   TwoPaneBrowserSettings, loadSettings,
   TagCategory, selectTagCategories,
@@ -240,7 +240,7 @@ export const selectMatchMode = createSelector(
 )
 
 export const selectTagFilteredFilesInScope = createSelector(
-  selectQueriedFilesInScope,
+  selectSortedFilesInScope,
   selectMatchMode,
   selectIncludeTagNames,
   selectExcludeTagNames,

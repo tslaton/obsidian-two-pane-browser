@@ -10,11 +10,14 @@ import store from './plugin/store'
 import TwoPaneBrowserView, { TWO_PANE_BROWSER_VIEW } from './plugin/view'
 import TwoPaneBrowserSettingTab from './plugin/settingsTab'
 import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, loadSettings } from './features/settings/settingsSlice'
-import { FileMeta, loadFiles, addFile, updateFile, removeFile, activateFile } from './features/files/filesSlice'
+import { 
+	FileMeta, FileSearchResultsByPath, 
+	loadFiles, addFile, updateFile, removeFile, activateFile,
+} from './features/files/filesSlice'
 import { FolderMeta, loadFolders, addFolder, updateFolder, removeFolder, awaitRenameFolder } from './features/folders/foldersSlice'
 import { revealTag } from './features/tags/extraActions'
-import { requestSearchResults, fulfillSearchResults, failSearchResults } from './features/search/searchSlice'
-import { getParentPath, selectElementContent } from './utils'
+import { requestSearchResults, fulfillSearchResults, failSearchResults } from './features/search/extraActions'
+import { getParentPath, selectElementContent, tokenizeQuery, getMatchingCoordinatePairs } from './utils'
 
 export default class TwoPaneBrowserPlugin extends Plugin {
 	// Used to avoid a timeout waiting for the beginning of a new file 
@@ -323,29 +326,35 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		store.dispatch(requestSearchResults())
 		try {
 			const files = paths.map(path => this.app.vault.getAbstractFileByPath(path))
-			const tokens = query.split(' ').map(t => t.trim())
-			const flags = matchCase ? 'g' : 'ig'
-			const results: FileMeta[] = []
+			const tokens = tokenizeQuery(query)
+			const flags = matchCase ? 'dg' : 'dgi'
+			const results: FileSearchResultsByPath = {}
 			for (let file of files) {
 				if (file && file instanceof TFile) {
+					const titleMatchingCoordinatePairsAcrossTokens = []
+					const contentMatchingCoordinatePairsAcrossTokens = []
 					const contents = await app.vault.cachedRead(file)
-					let totalMatches = 0
 					let matchedAllTokens = true
 					for (let token of tokens) {
 						const regex = RegExp(token, flags)
-						const titleMatches = file.name.match(regex)
-						const matches = contents.match(regex)
-						const numMatches = (titleMatches ? titleMatches.length : 0) + (matches ? matches.length : 0)
+						// Search the title
+						const titleMatchingCoordinatePairs = getMatchingCoordinatePairs(regex, file.basename)
+						titleMatchingCoordinatePairsAcrossTokens.push(...titleMatchingCoordinatePairs)
+						// Search the file contents
+						const contentMatchingCoordinatePairs = getMatchingCoordinatePairs(regex, contents)
+						contentMatchingCoordinatePairsAcrossTokens.push(...contentMatchingCoordinatePairs)
+						const numMatches = titleMatchingCoordinatePairs.length + contentMatchingCoordinatePairs.length
 						matchedAllTokens = matchedAllTokens && numMatches > 0
-						totalMatches += numMatches
 					}
 					if (matchedAllTokens) {
-						const result = this.fileMetaFromTFile(file)
-						result.preview = totalMatches === 1
-							? 'Contains 1 match'
-							: `Contains ${totalMatches} matches`
-						result.tags = this.getFileTags(file)
-						results.push(result)
+						// TODO: Collapse matching coordinate pairs contained in others; write context for each one
+						results[file.path] = {
+							titleMatches: {
+								text: file.basename,
+								matchingCoordinatePairs: titleMatchingCoordinatePairsAcrossTokens,
+							},
+							// TODO: contentMatches
+						}
 					}
 				}
 			}
