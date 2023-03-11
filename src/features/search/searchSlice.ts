@@ -2,7 +2,7 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit'
 // Modules
 import type { RootState } from '../../plugin/store'
-import { selectFilesInScope } from '../files/filesSlice'
+import { InteractiveFile, selectFilesInScope } from '../files/filesSlice'
 import { revealTag } from '../tags/extraActions'
 import { requestSearchResults, fulfillSearchResults, failSearchResults } from './extraActions'
 
@@ -134,8 +134,8 @@ export const selectQueriedFilesInScope = createSelector(
   selectSearchResultsInfo,
   (sortedFilesInScope, searchResultsInfo) => {
     if (searchResultsInfo.status === 'fulfilled') {
-      const queriedFilesInScope = sortedFilesInScope.filter(file => file.searchResults?.score)
-      return queriedFilesInScope.sort((a, b) => a.searchResults!.score - b.searchResults!.score)
+      const queriedFilesInScope: InteractiveFile[] = sortedFilesInScope.filter(file => file.searchResults?.score)
+      return queriedFilesInScope.sort((a, b) => b.searchResults!.score - a.searchResults!.score)
     }
     else {
       return sortedFilesInScope
