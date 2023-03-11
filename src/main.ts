@@ -17,7 +17,7 @@ import {
 import { FolderMeta, loadFolders, addFolder, updateFolder, removeFolder, awaitRenameFolder } from './features/folders/foldersSlice'
 import { revealTag } from './features/tags/extraActions'
 import { requestSearchResults, fulfillSearchResults, failSearchResults } from './features/search/extraActions'
-import { getParentPath, selectElementContent, tokenizeQuery, getMatchingCoordinatePairs } from './utils'
+import { getParentPath, selectElementContent, collapseWhitespace, tokenizeQuery, getMatchingCoordinatePairs, dedupeCoordinatePairs, getSearchResults } from './utils'
 
 export default class TwoPaneBrowserPlugin extends Plugin {
 	// Used to avoid a timeout waiting for the beginning of a new file 
@@ -158,7 +158,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		}))
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		// this.registerInterval(window.setInterval(() => console.log(store.getState()), 10 * 1000))
+		this.registerInterval(window.setInterval(() => console.log(store.getState()), 10 * 1000))
 	}
 
 	onunload() {
@@ -188,7 +188,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 				break
 			}
 			// Strip out tags and afterward, blank lines
-			line = line.replace(/#\S+/g, '').replace(/\s+/g, ' ').trim()
+			line = collapseWhitespace(line.replace(/#\S+/g, ''))
 			if (line) {
 				preview += `${line}\n`
 				lineCount += 1
@@ -325,36 +325,44 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 	async search(paths: string[], query: string, matchCase=false) {
 		store.dispatch(requestSearchResults())
 		try {
-			const files = paths.map(path => this.app.vault.getAbstractFileByPath(path))
+			const files = paths
+				.map(path => this.app.vault.getAbstractFileByPath(path))
+				.filter((file): file is TFile => file !== null)
 			const tokens = tokenizeQuery(query)
 			const flags = matchCase ? 'dg' : 'dgi'
 			const results: FileSearchResultsByPath = {}
 			for (let file of files) {
-				if (file && file instanceof TFile) {
-					const titleMatchingCoordinatePairsAcrossTokens = []
-					const contentMatchingCoordinatePairsAcrossTokens = []
-					const contents = await app.vault.cachedRead(file)
-					let matchedAllTokens = true
-					for (let token of tokens) {
-						const regex = RegExp(token, flags)
-						// Search the title
-						const titleMatchingCoordinatePairs = getMatchingCoordinatePairs(regex, file.basename)
+				const titleMatchingCoordinatePairsAcrossTokens = []
+				const contentMatchingCoordinatePairsAcrossTokens = []
+				const contents = await app.vault.cachedRead(file)
+				let score = 0
+				for (let token of tokens) {
+					const regex = RegExp(token, flags)
+					// Search the title
+					const titleMatchingCoordinatePairs = getMatchingCoordinatePairs(regex, file.basename)
+					if (titleMatchingCoordinatePairs.length > 0) {
 						titleMatchingCoordinatePairsAcrossTokens.push(...titleMatchingCoordinatePairs)
-						// Search the file contents
-						const contentMatchingCoordinatePairs = getMatchingCoordinatePairs(regex, contents)
-						contentMatchingCoordinatePairsAcrossTokens.push(...contentMatchingCoordinatePairs)
-						const numMatches = titleMatchingCoordinatePairs.length + contentMatchingCoordinatePairs.length
-						matchedAllTokens = matchedAllTokens && numMatches > 0
 					}
-					if (matchedAllTokens) {
-						// TODO: Collapse matching coordinate pairs contained in others; write context for each one
-						results[file.path] = {
-							titleMatches: {
-								text: file.basename,
-								matchingCoordinatePairs: titleMatchingCoordinatePairsAcrossTokens,
-							},
-							// TODO: contentMatches
-						}
+					// Search the file contents
+					const contentMatchingCoordinatePairs = getMatchingCoordinatePairs(regex, contents)
+					if (contentMatchingCoordinatePairs.length > 0) {
+						contentMatchingCoordinatePairsAcrossTokens.push(...contentMatchingCoordinatePairs)
+					}
+					const numMatches = titleMatchingCoordinatePairs.length + contentMatchingCoordinatePairs.length
+					if (numMatches === 0) {
+						score = 0
+						break
+					}
+					score += numMatches
+				}
+				if (score > 0) {
+					results[file.path] = {
+						score,
+						titleMatches: dedupeCoordinatePairs(titleMatchingCoordinatePairsAcrossTokens), 
+						contentMatches: getSearchResults(
+							dedupeCoordinatePairs(contentMatchingCoordinatePairsAcrossTokens),
+							contents,
+						),
 					}
 				}
 			}

@@ -27,15 +27,16 @@ export function Search() {
     searchInputRef.current!.focus()
   }, [])
 
-  // const debouncedExecuteSearch = debounce(() => {
-  //   if (query) {
-  //     plugin.search(filePathsInScope, query, matchCaseOn)
-  //   }
-  // }, 500, true)
+  const debouncedExecuteSearch = debounce((currentQuery: string) => {
+    if (currentQuery) {
+      plugin.search(filePathsInScope, currentQuery, matchCaseOn)
+    }
+  }, 500, true)
 
   function onChangeQuery(event: React.ChangeEvent<HTMLInputElement>) {
-    dispatch(updateSearchQuery(event.target.value))
-    // debouncedExecuteSearch()
+    const currentQuery = event.target.value
+    dispatch(updateSearchQuery(currentQuery))
+    debouncedExecuteSearch(currentQuery)
   }
 
   function onClickClearQuery() {

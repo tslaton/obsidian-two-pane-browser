@@ -24,7 +24,7 @@ export const searchSlice = createSlice({
       matchCase: { name: 'Match Case', isActive: false },
     },
     sort: { property: 'mtime', direction: 'desc' } as SortOption,
-    results: {
+    resultsInfo: {
       status: null as resultsStatus,
       error: null as string | null,
     },
@@ -34,7 +34,7 @@ export const searchSlice = createSlice({
       const query = action.payload
       state.query = query
       if (query === '') {
-        state.results = {
+        state.resultsInfo = {
           status: null,
           error: null,
         }
@@ -42,7 +42,7 @@ export const searchSlice = createSlice({
     },
     clearSearchQuery(state) {
       state.query = ''
-      state.results = {
+      state.resultsInfo = {
         status: null,
         error: null,
       }
@@ -70,19 +70,19 @@ export const searchSlice = createSlice({
         state.options.showTagFilters.isActive = true
       })
       .addCase(requestSearchResults, (state) => {
-        state.results = {
+        state.resultsInfo = {
           status: 'requested',
           error: null,
         }
       })
       .addCase(fulfillSearchResults, (state) => {
-        state.results = {
+        state.resultsInfo = {
           status: 'fulfilled',
           error: null,
         }
       })
       .addCase(failSearchResults, (state, action: PayloadAction<string>) => {
-        state.results = {
+        state.resultsInfo = {
           status: 'failed',
           error: action.payload,
         }
@@ -101,9 +101,11 @@ export const selectSearchInputHasFocus = (state: RootState) => state.search.sear
 
 export const selectSearchOptions = (state: RootState) => state.search.options
 
+export const selectSearchResultsInfo = (state: RootState) => state.search.resultsInfo
+
 export const selectSortOption = (state: RootState) => state.search.sort
 
-export const selectSearchResults = (state: RootState) => state.search.results
+export const selectSearchResults = (state: RootState) => state.search.resultsInfo
 
 export const selectSortedFilesInScope = createSelector(
   selectFilesInScope,
@@ -124,6 +126,20 @@ export const selectSortedFilesInScope = createSelector(
         return 0
       }
     })
+  }
+)
+
+export const selectQueriedFilesInScope = createSelector(
+  selectSortedFilesInScope,
+  selectSearchResultsInfo,
+  (sortedFilesInScope, searchResultsInfo) => {
+    if (searchResultsInfo.status === 'fulfilled') {
+      const queriedFilesInScope = sortedFilesInScope.filter(file => file.searchResults?.score)
+      return queriedFilesInScope.sort((a, b) => a.searchResults!.score - b.searchResults!.score)
+    }
+    else {
+      return sortedFilesInScope
+    }
   }
 )
 

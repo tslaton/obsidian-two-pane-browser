@@ -77,6 +77,10 @@ export function clearSelection() {
   })
 }
 
+export function collapseWhitespace(text: string) {
+  return text.replace(/\s+/g, ' ').trim()
+}
+
 // Ref: https://stackoverflow.com/a/18647776/8593354
 // Split a query containing words and possibly quoted elements into tokens
 export function tokenizeQuery(query: string) {
@@ -96,13 +100,20 @@ export function getMatchingCoordinatePairs(regex: RegExp, contents: string) {
   let match
   while ( (match = regex.exec(contents)) ) {
     // @ts-ignore https://github.com/tc39/proposal-regexp-match-indices
-    matchingCoordinatePairs.push(match.indices)
+    if (match.indices) {
+      // @ts-ignore
+      matchingCoordinatePairs.push(match.indices)
+    }
   }
   return matchingCoordinatePairs
 }
 
 // [[14, 27], [11, 16], [13, 31], [4, 7]] => [[4, 7], [11, 31]]
 export function dedupeCoordinatePairs(coordinatePairs: number[][]) {
+  if (coordinatePairs.length === 0) {
+    return [[]]
+  }
+  console.log('deduping: ', coordinatePairs)
   const dedupedPairs = []
   // Sorted in reverse, for future popping
   const sortedPairs = coordinatePairs.sort((a, b) => b[0] - a[0])
@@ -128,12 +139,34 @@ export function dedupeCoordinatePairs(coordinatePairs: number[][]) {
 
 export interface SearchResult {
   text: string
+  textOffset: number
   matchingCoordinatePairs: number[][]
 }
 
+// Assumes coordinatePairs has been deduped already
 export function getSearchResults(coordinatePairs: number[][], sourceText: string, contextSize=150) {
   const results: SearchResult[] = []
-  for (let [start, end] of coordinatePairs) {
-    // TODO: finish this
+  let contextCoordinatePairs = []
+  for (let [begin, end] of coordinatePairs) {
+    const contextBegin = Math.max(begin - contextSize, 0)
+    const contextEnd = Math.min(end + contextSize, sourceText.length)
+    contextCoordinatePairs.push([contextBegin, contextEnd])
   }
+  // Join overlapping contexts
+  contextCoordinatePairs = dedupeCoordinatePairs(contextCoordinatePairs)
+  for (let [begin, end] of contextCoordinatePairs) {
+    let context = sourceText.substring(begin, end)
+    context = collapseWhitespace(context)
+    const words = context.split(' ')
+    context = words.slice(1).join(' ')
+    // TODO: determine 
+    // 1. how to ensure each context contains its matches
+    // 2. the match indices still work after collapseWhitespace...
+    results.push({
+      text: context,
+      textOffset: begin,
+      matchingCoordinatePairs: coordinatePairs,
+    })
+  }
+  return results
 }

@@ -17,7 +17,8 @@ export interface FileMeta {
 }
 
 export interface FileSearchResults {
-  titleMatches?: SearchResult
+  score: number
+  titleMatches?: number[][]
   contentMatches?: SearchResult[]
 }
 
