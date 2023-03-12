@@ -96,13 +96,13 @@ export function tokenizeQuery(query: string) {
 }
 
 export function getMatchingCoordinatePairs(regex: RegExp, contents: string) {
-  const matchingCoordinatePairs = []
+  const matchingCoordinatePairs: number[][] = []
   let match
   while ( (match = regex.exec(contents)) ) {
     // @ts-ignore https://github.com/tc39/proposal-regexp-match-indices
     if (match.indices) {
       // @ts-ignore
-      matchingCoordinatePairs.push(match.indices)
+      matchingCoordinatePairs.push(...match.indices)
     }
   }
   return matchingCoordinatePairs
@@ -110,13 +110,9 @@ export function getMatchingCoordinatePairs(regex: RegExp, contents: string) {
 
 // [[14, 27], [11, 16], [13, 31], [4, 7]] => [[4, 7], [11, 31]]
 export function dedupeCoordinatePairs(coordinatePairs: number[][]) {
-  if (coordinatePairs.length === 0) {
-    return [[]]
-  }
-  console.log('deduping: ', coordinatePairs)
-  const dedupedPairs = []
+  const dedupedPairs: number[][] = []
   // Sorted in reverse, for future popping
-  const sortedPairs = coordinatePairs.sort((a, b) => b[0] - a[0])
+  const sortedPairs = coordinatePairs.slice().sort((a, b) => b[0] - a[0])
   let pair
   while ( (pair = sortedPairs.pop()) ) {
     let [start, end] = pair
