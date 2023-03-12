@@ -215,7 +215,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 	async inflatedFileMetaFromTFile(f: TFile, fileCache: CachedMetadata|null=null) {
 		const file = this.fileMetaFromTFile(f)
 		file.preview = await this.getFilePreview(f)
-		file.tags = this.getFileTags(f)
+		file.tags = this.getFileTags(f, fileCache)
 		return file
 	}
 
