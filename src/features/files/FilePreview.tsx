@@ -9,6 +9,7 @@ import EditableName from '../../common/EditableName'
 import FileContextMenu from './FileContextMenu'
 import { InteractiveFile, toggleFileSelection, stopAwaitingRenameFile } from './filesSlice'
 import Tag from '../tags/Tag'
+import ObsidianMarkdown from '../../common/ObsidianMarkdown'
 
 interface FilePreviewProps {
   file: InteractiveFile
@@ -56,9 +57,7 @@ export default function FilePreview(props: FilePreviewProps) {
         isAwaitingRename={isAwaitingRename}
         onBlurAction={stopAwaitingRenameFile(path)}
       />
-      <div>
-        {preview}
-      </div>
+      <ObsidianMarkdown content={preview} path={file.path} />      
       <div className="flex-file-info-wrapper">
         <div className="last-modified">
           {moment(stat.mtime).fromNow()}
