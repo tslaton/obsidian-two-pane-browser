@@ -1,11 +1,11 @@
 // Libraries
 import { FileStats, moment } from 'obsidian'
-import { createSelector, createSlice, createEntityAdapter, PayloadAction } from '@reduxjs/toolkit'
+import { createSelector, createSlice, createEntityAdapter, PayloadAction, isAnyOf } from '@reduxjs/toolkit'
 // Modules
 import type { RootState } from '../../plugin/store'
 import { InteractiveFolder, selectPathsInScope } from '../folders/foldersSlice'
 import { selectActiveFilter } from '../filters/filtersSlice'
-import { requestSearchResults, fulfillSearchResults, failSearchResults } from '../search/extraActions'
+import { requestSearchResults, fulfillSearchResults, failSearchResults, clearSearchResults } from '../search/extraActions'
 import { getParentPath, getDescendantPaths, SearchResult } from '../../utils'
 
 export interface FileMeta {
@@ -83,11 +83,6 @@ export const filesSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(requestSearchResults, (state) => {
-        for (let [_, file] of Object.entries(state.entities)) {
-          file!.searchResults = undefined
-        }
-      })
       .addCase(fulfillSearchResults, (state, action: PayloadAction<FileSearchResultsByPath>) => {
         const fileSearchResultsByPath = action.payload
         for (let [path, searchResults] of Object.entries(fileSearchResultsByPath)) {
@@ -97,11 +92,14 @@ export const filesSlice = createSlice({
           }
         }
       })
-      .addCase(failSearchResults, (state) => {
-        for (let [_, file] of Object.entries(state.entities)) {
-          file!.searchResults = undefined
+      .addMatcher(
+        isAnyOf(requestSearchResults, failSearchResults, clearSearchResults),
+        (state) => {
+          for (let [_, file] of Object.entries(state.entities)) {
+            file!.searchResults = undefined
+          }
         }
-      })
+      )
   }
 })
 

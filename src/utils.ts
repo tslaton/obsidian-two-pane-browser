@@ -81,6 +81,10 @@ export function collapseWhitespace(text: string) {
   return text.replace(/\s+/g, ' ').trim()
 }
 
+export function stripHashtags(text: string) {
+  return text.replace(/#\S+/g, '')
+}
+
 // Ref: https://stackoverflow.com/a/18647776/8593354
 // Split a query containing words and possibly quoted elements into tokens
 export function tokenizeQuery(query: string) {
@@ -152,7 +156,7 @@ export function getSearchResults(coordinatePairs: number[][], sourceText: string
   contextCoordinatePairs = dedupeCoordinatePairs(contextCoordinatePairs)
   for (let [begin, end] of contextCoordinatePairs) {
     let context = sourceText.substring(begin, end)
-    context = collapseWhitespace(context)
+    context = collapseWhitespace(stripHashtags(context))
     const words = context.split(' ')
     context = words.slice(1).join(' ')
     // TODO: determine 

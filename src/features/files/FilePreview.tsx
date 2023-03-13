@@ -7,6 +7,7 @@ import PluginContext from '../../plugin/PluginContext'
 import { useAppDispatch } from '../../plugin/hooks'
 import EditableName from '../../common/EditableName'
 import FileContextMenu from './FileContextMenu'
+import SearchResults from './SearchResults'
 import { InteractiveFile, toggleFileSelection, stopAwaitingRenameFile } from './filesSlice'
 import Tag from '../tags/Tag'
 import ObsidianMarkdown from '../../common/ObsidianMarkdown'
@@ -17,7 +18,7 @@ interface FilePreviewProps {
 
 export default function FilePreview(props: FilePreviewProps) {
   const { file } = props
-  const { name, path, stat, preview, tags, isAwaitingRename } = file
+  const { name, path, stat, preview, tags, isAwaitingRename, searchResults } = file
   const basename = name.replace(/\.[^/.]+$/, '')
   const plugin = React.useContext(PluginContext)
   const dispatch = useAppDispatch()
@@ -66,6 +67,7 @@ export default function FilePreview(props: FilePreviewProps) {
           <Tag key={tag} name={tag} />
         )}
       </div>
+      {searchResults && <SearchResults {...searchResults} />}
     </StyledFilePreview>
   )
 }

@@ -7,8 +7,11 @@ import PluginContext from '../../plugin/PluginContext'
 import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
 import ObsidianIcon from '../../common/ObsidianIcon'
 import SortOptionsContextMenu from './SortOptionsContextMenu'
-import { selectSearchQuery, selectSortOption, clearSearchQuery, setSearchInputHasFocus} from '../search/searchSlice'
-import { selectSearchOptions, toggleShowSearch, toggleShowTagFilters, toggleMatchCase, updateSearchQuery } from '../search/searchSlice'
+import { 
+  selectSearchQuery, selectSearchOptions, selectSortOption, setSearchInputHasFocus,
+  toggleShowSearch, toggleShowTagFilters, toggleMatchCase, updateSearchQuery
+} from '../search/searchSlice'
+import { clearSearchResults } from './extraActions'
 import TagFiltersContainer from '../tags/TagFiltersContainer'
 import { selectFilesInScope } from '../files/filesSlice'
 
@@ -28,19 +31,22 @@ export function Search() {
   }, [])
 
   const debouncedExecuteSearch = debounce((currentQuery: string) => {
-    if (currentQuery) {
-      plugin.search(filePathsInScope, currentQuery, matchCaseOn)
-    }
+    plugin.search(filePathsInScope, currentQuery, matchCaseOn)
   }, 500, true)
 
   function onChangeQuery(event: React.ChangeEvent<HTMLInputElement>) {
     const currentQuery = event.target.value
     dispatch(updateSearchQuery(currentQuery))
-    debouncedExecuteSearch(currentQuery)
+    if (currentQuery) {
+      debouncedExecuteSearch(currentQuery)
+    }
+    else {
+      dispatch(clearSearchResults())
+    }
   }
 
   function onClickClearQuery() {
-    dispatch(clearSearchQuery())
+    dispatch(clearSearchResults())
   }
 
   function onSubmitQuery(event: React.FormEvent) {

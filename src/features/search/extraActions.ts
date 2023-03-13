@@ -7,3 +7,4 @@ import { FileSearchResultsByPath } from '../files/filesSlice'
 export const requestSearchResults = createAction('search/requestSearchResults')
 export const fulfillSearchResults = createAction<FileSearchResultsByPath>('search/fulfillSearchResults')
 export const failSearchResults = createAction<string>('search/failSearchResults')
+export const clearSearchResults = createAction('search/clearSearchResults')

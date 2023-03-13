@@ -17,7 +17,11 @@ import {
 import { FolderMeta, loadFolders, addFolder, updateFolder, removeFolder, awaitRenameFolder } from './features/folders/foldersSlice'
 import { revealTag } from './features/tags/extraActions'
 import { requestSearchResults, fulfillSearchResults, failSearchResults } from './features/search/extraActions'
-import { getParentPath, selectElementContent, collapseWhitespace, tokenizeQuery, getMatchingCoordinatePairs, dedupeCoordinatePairs, getSearchResults } from './utils'
+import { 
+	getParentPath, selectElementContent, 
+	collapseWhitespace, stripHashtags,
+	tokenizeQuery, getMatchingCoordinatePairs, dedupeCoordinatePairs, getSearchResults,
+} from './utils'
 
 export default class TwoPaneBrowserPlugin extends Plugin {
 	// Used to avoid a timeout waiting for the beginning of a new file 
@@ -188,7 +192,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 				break
 			}
 			// Strip out tags and afterward, blank lines
-			line = collapseWhitespace(line.replace(/#\S+/g, ''))
+			line = collapseWhitespace(stripHashtags(line))
 			if (line) {
 				preview += `${line}\n`
 				lineCount += 1

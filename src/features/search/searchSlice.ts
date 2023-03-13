@@ -4,7 +4,7 @@ import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit'
 import type { RootState } from '../../plugin/store'
 import { InteractiveFile, selectFilesInScope } from '../files/filesSlice'
 import { revealTag } from '../tags/extraActions'
-import { requestSearchResults, fulfillSearchResults, failSearchResults } from './extraActions'
+import { requestSearchResults, fulfillSearchResults, failSearchResults, clearSearchResults } from './extraActions'
 
 export interface SortOption {
   property: 'filename' | 'mtime' | 'ctime'
@@ -33,19 +33,6 @@ export const searchSlice = createSlice({
     updateSearchQuery(state, action: PayloadAction<string>) {
       const query = action.payload
       state.query = query
-      if (query === '') {
-        state.resultsInfo = {
-          status: null,
-          error: null,
-        }
-      }
-    },
-    clearSearchQuery(state) {
-      state.query = ''
-      state.resultsInfo = {
-        status: null,
-        error: null,
-      }
     },
     setSearchInputHasFocus(state, action: PayloadAction<boolean>) {
       state.searchInputHasFocus = action.payload
@@ -65,6 +52,13 @@ export const searchSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(clearSearchResults, (state) => {
+        state.query = ''
+        state.resultsInfo = {
+          status: null,
+          error: null,
+        }
+      })
       .addCase(revealTag, (state) => {
         state.options.showSearch.isActive = true
         state.options.showTagFilters.isActive = true
@@ -91,7 +85,7 @@ export const searchSlice = createSlice({
 })
 
 export const { 
-  updateSearchQuery, clearSearchQuery, setSearchInputHasFocus,
+  updateSearchQuery, setSearchInputHasFocus,
   toggleShowSearch, toggleShowTagFilters, toggleMatchCase, setSortOption,
 } = searchSlice.actions
 
