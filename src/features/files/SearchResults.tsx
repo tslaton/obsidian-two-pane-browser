@@ -12,7 +12,7 @@ export default function SearchResults(props: FileSearchResults) {
   return (
     <div>
       {contentMatches.map(({ text, textOffset, matchingCoordinatePairs }) => 
-        <ObsidianMarkdown key={text} content={text} path="" />
+        <ObsidianMarkdown content={text} path="" />
       )}
     </div>
   )

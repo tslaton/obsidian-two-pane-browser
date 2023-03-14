@@ -344,14 +344,10 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 					const regex = RegExp(token, flags)
 					// Search the title
 					const titleMatchingCoordinatePairs = getMatchingCoordinatePairs(regex, file.basename)
-					if (titleMatchingCoordinatePairs.length > 0) {
-						titleMatchingCoordinatePairsAcrossTokens.push(...titleMatchingCoordinatePairs)
-					}
+					titleMatchingCoordinatePairsAcrossTokens.push(...titleMatchingCoordinatePairs)
 					// Search the file contents
 					const contentMatchingCoordinatePairs = getMatchingCoordinatePairs(regex, contents)
-					if (contentMatchingCoordinatePairs.length > 0) {
-						contentMatchingCoordinatePairsAcrossTokens.push(...contentMatchingCoordinatePairs)
-					}
+					contentMatchingCoordinatePairsAcrossTokens.push(...contentMatchingCoordinatePairs)
 					const numMatches = titleMatchingCoordinatePairs.length + contentMatchingCoordinatePairs.length
 					if (numMatches === 0) {
 						score = 0

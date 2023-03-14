@@ -143,30 +143,48 @@ export interface SearchResult {
   matchingCoordinatePairs: number[][]
 }
 
-// Assumes coordinatePairs has been deduped already
-export function getSearchResults(coordinatePairs: number[][], sourceText: string, contextSize=150) {
+export function getSearchResults(coordinatePairs: number[][], sourceText: string, maxSeparation=40) {
+  // dedupedCoordinatePairs are non-overlapping
+  const dedupedCoordinatePairs = dedupeCoordinatePairs(coordinatePairs)
   const results: SearchResult[] = []
   let contextCoordinatePairs = []
-  for (let [begin, end] of coordinatePairs) {
-    const contextBegin = Math.max(begin - contextSize, 0)
-    const contextEnd = Math.min(end + contextSize, sourceText.length)
-    contextCoordinatePairs.push([contextBegin, contextEnd])
-  }
-  // Join overlapping contexts
-  contextCoordinatePairs = dedupeCoordinatePairs(contextCoordinatePairs)
-  for (let [begin, end] of contextCoordinatePairs) {
-    let context = sourceText.substring(begin, end)
-    context = collapseWhitespace(stripHashtags(context))
-    const words = context.split(' ')
-    context = words.slice(1).join(' ')
-    // TODO: determine 
-    // 1. how to ensure each context contains its matches
-    // 2. the match indices still work after collapseWhitespace...
-    results.push({
-      text: context,
-      textOffset: begin,
-      matchingCoordinatePairs: coordinatePairs,
-    })
+  let pair
+  // Join any pairs that are < maxSeparation apart in the same context
+  while ( (pair = dedupedCoordinatePairs.pop()) ) {
+    let [start, end] = pair
+    let otherPair
+    while ( (otherPair = dedupedCoordinatePairs.at(-1)) ) {
+      let [i, j] = otherPair
+      const [a, b] = [Math.min(start, i), Math.max(end, j)]
+      const candidateContext = sourceText.substring(a, b)
+      const firstLine = candidateContext.match(/.+$/m)?.toString()
+      // Only join results within the same line, less than maxSeparation apart
+      if (candidateContext === firstLine && b - a < maxSeparation) {
+        [start, end] = [a, b]
+        dedupedCoordinatePairs.pop()
+      }
+      else {
+        break
+      }
+    }
+    // Expand the context, if necessary
+    if ( (end - start) < maxSeparation ) {
+      const match = sourceText.substring(start, end)
+      const regex = new RegExp(String.raw`(\S+[^\S\r\n]+){0,2}(?:${match})([^\S\r\n]+\S+){0,2}`)
+      regex.lastIndex = Math.max(start - 20, 0)
+      const _match = regex.exec(sourceText)
+      const context = _match ? _match[0].toString() : match
+      console.log('sourceText: ', sourceText)
+      console.log('match: ', match)
+      console.log('regex: ', regex)
+      console.log('context: ', context)
+      results.push({
+        text: context,
+        textOffset: start + (context.indexOf(match) || 0),
+        matchingCoordinatePairs: coordinatePairs,
+      })
+    }
+    // contextCoordinatePairs.push([start, end])
   }
   return results
 }
