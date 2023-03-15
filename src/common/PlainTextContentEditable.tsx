@@ -1,6 +1,6 @@
 // Libraries
 import * as React from 'react'
-import styled from '@emotion/styled'
+import { css } from '@emotion/react'
 
 interface PlainTextContentEditableProps {
   disableClicks?: boolean
@@ -9,19 +9,21 @@ interface PlainTextContentEditableProps {
 }
 
 const PlainTextContentEditable = React.forwardRef<HTMLDivElement, PlainTextContentEditableProps>((props, ref) => {
+  const { disableClicks, ...rest } = props
+  
+  const styles = css`
+    pointer-events: ${disableClicks ? 'none' : 'initial'};
+  `
+  
   return (
-    <StyledPlainTextContentEditable {...props}
-      contentEditable={"plaintext-only" as any} 
+    <div css={styles} {...rest}
+      contentEditable={'plaintext-only' as any} 
       suppressContentEditableWarning={true}
       ref={ref}
     >
       {props.children}
-    </StyledPlainTextContentEditable>
+    </div>
   )
 })
-
-const StyledPlainTextContentEditable = styled.div<PlainTextContentEditableProps>`
-  pointer-events: ${props => props.disableClicks ? 'none' : 'initial'};
-`
 
 export default PlainTextContentEditable

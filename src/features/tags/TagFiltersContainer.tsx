@@ -1,6 +1,6 @@
 // Libraries
 import * as React from 'react'
-import styled from '@emotion/styled'
+import { css } from '@emotion/react'
 // Modules
 import { useAppSelector, useAppDispatch } from '../../plugin/hooks'
 import TagCategory from '../tags/TagCategory'
@@ -40,7 +40,7 @@ export default function TagFiltersContainer() {
   }
 
   return (
-    <StyledTagFiltersContainer>
+    <div css={styles.self}>
       <div className="tag-filters-flex-controls">
         <label htmlFor="tag-filter-options">Match:</label>
         <select id="tag-filter-options" value={matchMode} onChange={onChangeMatchMode}>
@@ -69,40 +69,42 @@ export default function TagFiltersContainer() {
           />
         )}
       </div>
-    </StyledTagFiltersContainer>
+    </div>
   )
 }
 
-const StyledTagFiltersContainer = styled.div`
-  label[for="tag-filter-options"] {
-    display: block;
-  }
-
-  #tag-filter-options {
-    background: none;
-    box-shadow: none;
-    appearance: auto;
-
-    &:hover {
-      background-color: var(--nav-item-background-hover);
+const styles = {
+  self: css`
+    label[for="tag-filter-options"] {
+      display: block;
     }
-  }
 
-  .tag-filters-flex-controls {
-    display: flex;
-    flex-direction: horizontal;
-    align-items: center;
-    padding: 2px 2px;
-    gap: 4px;
-  }
+    #tag-filter-options {
+      background: none;
+      box-shadow: none;
+      appearance: auto;
 
-  .tag-filters-flex-container {
-    display: flex;
-    flex-direction: horizontal;
-    flex-wrap: wrap;
-    align-items: center;
-    column-gap: 4px;
-    row-gap: 8px;
-    padding: 2px 2px;
-  }
-`
+      &:hover {
+        background-color: var(--nav-item-background-hover);
+      }
+    }
+
+    .tag-filters-flex-controls {
+      display: flex;
+      flex-direction: horizontal;
+      align-items: center;
+      padding: 2px 2px;
+      gap: 4px;
+    }
+
+    .tag-filters-flex-container {
+      display: flex;
+      flex-direction: horizontal;
+      flex-wrap: wrap;
+      align-items: center;
+      column-gap: 4px;
+      row-gap: 8px;
+      padding: 2px 2px;
+    }
+  `
+}

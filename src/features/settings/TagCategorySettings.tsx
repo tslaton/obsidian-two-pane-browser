@@ -1,6 +1,6 @@
 // Libraries
 import * as React from 'react'
-import styled from '@emotion/styled'
+import { css } from '@emotion/react'
 // Modules
 import PluginContext from '../../plugin/PluginContext'
 import { useAppSelector } from '../../plugin/hooks'
@@ -46,7 +46,7 @@ export default function TagCategorySettings({ tagCategory }: { tagCategory: TagC
   }
   
   return (
-    <StyledTagCategorySettings>
+    <div css={styles.self}>
       <form onSubmit={onSubmitUpdateTagCategory}>
         <div className="update-tag-category-inputs">
           <input 
@@ -79,21 +79,23 @@ export default function TagCategorySettings({ tagCategory }: { tagCategory: TagC
           </button>
         </div>
       </form>
-    </StyledTagCategorySettings>
+    </div>
   )
 }
 
-const StyledTagCategorySettings = styled.div`
-  margin-bottom: 10px;
-
-  .update-tag-category-inputs {
-    display: flex;
-    flex-direction: horizontal;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .update-tag-category-inputs, textarea {
+const styles = {
+  self: css`
     margin-bottom: 10px;
-  }
-`
+
+    .update-tag-category-inputs {
+      display: flex;
+      flex-direction: horizontal;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .update-tag-category-inputs, textarea {
+      margin-bottom: 10px;
+    }
+  `,
+}

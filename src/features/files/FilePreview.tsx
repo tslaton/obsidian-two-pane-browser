@@ -1,7 +1,8 @@
 // Libraries
 import { moment } from 'obsidian'
 import * as React from 'react'
-import styled from '@emotion/styled'
+import { css } from '@emotion/react'
+import classNames from 'classnames'
 // Modules
 import PluginContext from '../../plugin/PluginContext'
 import { useAppDispatch } from '../../plugin/hooks'
@@ -38,29 +39,24 @@ export default function FilePreview(props: FilePreviewProps) {
     menu.showAtMouseEvent(event.nativeEvent)
   }
 
-  const statusClasses = [
-    file.isSelected ? ' is-selected' : '', 
-    file.isActive ? 'is-active' : ''
-  ].join(' ')
-
   return (
-    <StyledFilePreview 
-      className={`nav-item ${statusClasses}`} 
+    <div 
+      className={classNames('nav-item', { 'is-selected': file.isSelected, 'is-active': file.isActive })}
+      css={styles.self}
       onClick={onClick} 
-      onContextMenu={onContextMenu} 
-      {...props}
+      onContextMenu={onContextMenu}
     >
       <EditableName 
-        className="file-name"
+        css={styles.filename}
         name={basename}
         path={path}
-        extension={'.md'}
+        extension=".md"
         isAwaitingRename={isAwaitingRename}
         onBlurAction={stopAwaitingRenameFile(path)}
       />
       <ObsidianMarkdown content={preview} path={file.path} />      
-      <div className="flex-file-info-wrapper">
-        <div className="last-modified">
+      <div css={styles.fileInfoFlexContainer}>
+        <div css={styles.lastModified}>
           {moment(stat.mtime).fromNow()}
         </div>
         {tags.map(tag => 
@@ -68,32 +64,31 @@ export default function FilePreview(props: FilePreviewProps) {
         )}
       </div>
       {searchResults && <SearchResults {...searchResults} />}
-    </StyledFilePreview>
+    </div>
   )
 }
 
-const StyledFilePreview = styled.div<FilePreviewProps>`
-  padding: 10px;
-  border-radius: 4px;
-
-  .file-name {
+const styles = {
+  self: css`
+    padding: 10px;
+    border-radius: 4px;
+  `,
+  filename: css`
     font-size: 16px;
     font-weight: bold;
-  }
-
-  .flex-file-info-wrapper {
+  `,
+  fileInfoFlexContainer: css`
     display: flex;
     flex-direction: horizontal;
     flex-wrap: wrap;
     align-items: center;
-
+    
     .tag {
       margin: 2px 0.5px;
     }
-  }
-
-  .last-modified {
+  `,
+  lastModified: css`
     color: var(--text-faint);
     margin-right: 4px;
-  }
-`
+  `,
+}

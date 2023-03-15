@@ -1,6 +1,7 @@
 // Libraries
 import * as React from 'react'
-import styled from '@emotion/styled'
+import { css } from '@emotion/react'
+import classNames from 'classnames'
 // Modules
 import PluginContext from '../../plugin/PluginContext'
 import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
@@ -50,10 +51,27 @@ export default function Folder(props: FolderProps) {
     menu.showAtMouseEvent(event.nativeEvent)
   }
 
+  const styles = css`
+    margin-left: ${level*20}px;
+
+    & > .flex-folder-wrapper {
+      display: flex;
+      flex-direction: horizontal;
+      padding: 10px;
+      border-radius: 4px;
+      pointer-events: ${folder.isAwaitingRename ? 'none' : 'initial' };
+    }
+
+    .folder-name {
+      line-height: 24px;
+      flex: 1;
+    }
+  `
+
   return (
-    <StyledFolder {...props}>
+    <div css={styles}>
       <div 
-        className={`flex-folder-wrapper nav-item ${folder.isSelected ? 'is-active' : ''}`} 
+        className={classNames('nav-item', 'flex-folder-wrapper', { 'is-active' : folder.isSelected })}
         onClick={toggleIsSelected} 
         onContextMenu={onContextMenu}
       >
@@ -72,28 +90,6 @@ export default function Folder(props: FolderProps) {
       {folder.isExpanded && childFolders.map(childFolder =>
         <Folder key={childFolder.path} folder={childFolder} level={level + 1} />
       )}
-    </StyledFolder>
+    </div>
   )
 }
-
-const StyledFolder = styled.div<FolderProps>`
-  margin-left: ${props => `${props.level*20}px`};
-
-  & > .flex-folder-wrapper {
-    display: flex;
-    flex-direction: horizontal;
-    padding: 10px;
-    border-radius: 4px;
-    pointer-events: ${props => props.folder.isAwaitingRename ? 'none' : 'initial' };
-  }
-
-  .folder-name {
-    line-height: 24px;
-    flex: 1;
-  }
-
-  .file-count {
-    line-height: 24px;
-    color: var(--text-faint);
-  }
-`

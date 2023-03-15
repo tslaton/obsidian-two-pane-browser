@@ -1,10 +1,10 @@
 // Libraries
 import { App, PluginSettingTab } from 'obsidian'
-// Modules
 import * as React from 'react'
 import { Root, createRoot } from 'react-dom/client'
-import PluginContext from './PluginContext'
 import { Provider } from 'react-redux'
+// Modules
+import PluginContext from './PluginContext'
 import type TwoPaneBrowserPlugin from '../main'
 import store from './store'
 import Settings from '../features/settings/Settings'
