@@ -1,6 +1,6 @@
 // Libraries
 import * as React from 'react'
-import styled from '@emotion/styled'
+import { css } from '@emotion/react'
 // Modules
 import { useAppSelector, useAppDispatch } from '../../plugin/hooks'
 import TagCategory from '../tags/TagCategory'
@@ -40,7 +40,7 @@ export default function TagFiltersContainer() {
   }
 
   return (
-    <StyledTagFiltersContainer>
+    <div css={styles}>
       <div className="tag-filters-flex-controls">
         <label htmlFor="tag-filter-options">Match:</label>
         <select id="tag-filter-options" value={matchMode} onChange={onChangeMatchMode}>
@@ -69,11 +69,11 @@ export default function TagFiltersContainer() {
           />
         )}
       </div>
-    </StyledTagFiltersContainer>
+    </div>
   )
 }
 
-const StyledTagFiltersContainer = styled.div`
+const styles = css`
   label[for="tag-filter-options"] {
     display: block;
   }

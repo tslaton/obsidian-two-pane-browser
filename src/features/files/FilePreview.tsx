@@ -1,7 +1,8 @@
 // Libraries
 import { moment } from 'obsidian'
 import * as React from 'react'
-import styled from '@emotion/styled'
+import { css } from '@emotion/react'
+import classNames from 'classnames'
 // Modules
 import PluginContext from '../../plugin/PluginContext'
 import { useAppDispatch } from '../../plugin/hooks'
@@ -12,12 +13,7 @@ import { InteractiveFile, toggleFileSelection, stopAwaitingRenameFile } from './
 import Tag from '../tags/Tag'
 import ObsidianMarkdown from '../../common/ObsidianMarkdown'
 
-interface FilePreviewProps {
-  file: InteractiveFile
-}
-
-export default function FilePreview(props: FilePreviewProps) {
-  const { file } = props
+export default function FilePreview(file: InteractiveFile) {
   const { name, path, stat, preview, tags, isAwaitingRename, searchResults } = file
   const basename = name.replace(/\.[^/.]+$/, '')
   const plugin = React.useContext(PluginContext)
@@ -38,28 +34,23 @@ export default function FilePreview(props: FilePreviewProps) {
     menu.showAtMouseEvent(event.nativeEvent)
   }
 
-  const statusClasses = [
-    file.isSelected ? ' is-selected' : '', 
-    file.isActive ? 'is-active' : ''
-  ].join(' ')
-
   return (
-    <StyledFilePreview 
-      className={`nav-item ${statusClasses}`} 
+    <div 
+      className={classNames('nav-item', { 'is-selected': file.isSelected, 'is-active': file.isActive })}
+      css={styles}
       onClick={onClick} 
-      onContextMenu={onContextMenu} 
-      {...props}
+      onContextMenu={onContextMenu}
     >
       <EditableName 
         className="file-name"
         name={basename}
         path={path}
-        extension={'.md'}
+        extension=".md"
         isAwaitingRename={isAwaitingRename}
         onBlurAction={stopAwaitingRenameFile(path)}
       />
       <ObsidianMarkdown content={preview} path={file.path} />      
-      <div className="flex-file-info-wrapper">
+      <div className="file-info-flex-container">
         <div className="last-modified">
           {moment(stat.mtime).fromNow()}
         </div>
@@ -68,11 +59,11 @@ export default function FilePreview(props: FilePreviewProps) {
         )}
       </div>
       {searchResults && <SearchResults {...searchResults} />}
-    </StyledFilePreview>
+    </div>
   )
 }
 
-const StyledFilePreview = styled.div<FilePreviewProps>`
+const styles = css`
   padding: 10px;
   border-radius: 4px;
 
@@ -81,12 +72,12 @@ const StyledFilePreview = styled.div<FilePreviewProps>`
     font-weight: bold;
   }
 
-  .flex-file-info-wrapper {
+  .file-info-flex-container {
     display: flex;
     flex-direction: horizontal;
     flex-wrap: wrap;
     align-items: center;
-
+  
     .tag {
       margin: 2px 0.5px;
     }

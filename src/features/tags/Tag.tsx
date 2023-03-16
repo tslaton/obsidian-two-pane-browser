@@ -1,13 +1,14 @@
 // Libraries
 import * as React from 'react'
-import styled from '@emotion/styled'
+import { css } from '@emotion/react'
+import classNames from 'classnames'
 // Modules
 import { useAppDispatch } from '../../plugin/hooks'
 import { TagFilter, toggleTagFilter } from './tagFiltersSlice'
 import { alphaColor } from '../../utils'
 
 export default function Tag(props: TagFilter) {
-  const { name, status } = props
+  const { name, color, status } = props
 	const dispatch = useAppDispatch()
 
 	function onClick() {
@@ -35,42 +36,43 @@ export default function Tag(props: TagFilter) {
 		? 'tag'
 		: 'tag-filter'
 
+	const styles = css`
+		&.tag {
+			cursor: pointer;
+		}
+
+		&.tag-filter:hover {
+			span {
+				background-color: ${color ? alphaColor(color, 0.2) : 'hsla(var(--color-accent-hsl), 0.2)'};
+			}
+		}
+
+		span.include {
+			border-color: ${color ? color : 'var(--color-accent)'};
+
+			&.cm-hashtag-begin {
+				border-width: 2px 0 2px 2px;
+			}
+
+			&.cm-hashtag-end {
+				border-width: 2px 2px 2px 0;
+			}
+		}
+
+		span.exclude {
+			color: var(--text-faint);
+			text-decoration: line-through;
+		}
+	`
+
   return (
-		<StyledTag className={identifyingClassName} onClick={onClick} {...props}>
+		<div className={identifyingClassName} css={styles} onClick={onClick}>
 			<span className={tagBeginClasses}>#</span>
 			<span className={tagEndClasses}>{plainName}</span>
-		</StyledTag>
+		</div>
   )
 }
 
-const StyledTag = styled.div<TagFilter>`
-	&.tag {
-		cursor: pointer;
-	}
-
-	&.tag-filter:hover {
-		span {
-			background-color: ${props => props.color ? alphaColor(props.color, 0.2) : 'hsla(var(--color-accent-hsl), 0.2)'};
-		}
-	}
-
-	span.include {
-		border-color: ${props => props.color ? props.color : 'var(--color-accent)'};
-
-		&.cm-hashtag-begin {
-			border-width: 2px 0 2px 2px;
-		}
-
-		&.cm-hashtag-end {
-			border-width: 2px 2px 2px 0;
-		}
-	}
-
-	span.exclude {
-		color: var(--text-faint);
-		text-decoration: line-through;
-	}
-`
 // Obsidian CSS vars
 // --tag-size: var(--font-smaller);
 // --tag-color: var(--text-accent);

@@ -1,21 +1,20 @@
 // Libraries
 import { debounce } from 'obsidian'
 import * as React from 'react'
-import styled from '@emotion/styled'
+import { css } from '@emotion/react'
 // Modules
 import PluginContext from '../../plugin/PluginContext'
 import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
 import ObsidianIcon from '../../common/ObsidianIcon'
-import SortOptionsContextMenu from './SortOptionsContextMenu'
 import { 
-  selectSearchQuery, selectSearchOptions, selectSortOption, setSearchInputHasFocus,
-  toggleShowSearch, toggleShowTagFilters, toggleMatchCase, updateSearchQuery
+  selectSearchQuery, selectSearchOptions, setSearchInputHasFocus,
+  toggleShowTagFilters, updateSearchQuery
 } from '../search/searchSlice'
 import { clearSearchResults } from './extraActions'
 import TagFiltersContainer from '../tags/TagFiltersContainer'
 import { selectFilesInScope } from '../files/filesSlice'
 
-export function Search() {
+export default function Search() {
   const plugin = React.useContext(PluginContext)
   const dispatch = useAppDispatch()
   const query = useAppSelector(selectSearchQuery)
@@ -67,8 +66,8 @@ export function Search() {
   }
 
   return (
-    <>
-      <div className="search-flex-wrapper">
+    <div css={styles}>
+      <div className="search-flex-container">
         <div className="search-input-container">
           <form onSubmit={onSubmitQuery}>
             <input 
@@ -87,83 +86,13 @@ export function Search() {
         <ObsidianIcon iconName="tags" size={22} isActive={showTagFilters} onClick={onClickShowTagFilters} />
       </div>
       {showTagFilters && <TagFiltersContainer />}
-    </>
+      <hr />
+    </div>
   )
 }
 
-export default function SearchContainer() {
-  const plugin = React.useContext(PluginContext)
-  const dispatch = useAppDispatch()
-  const sortOption = useAppSelector(selectSortOption)
-  const sortIconName = sortOption.direction === 'asc' ? 'sort-asc' : 'sort-desc'
-  const searchOptions = useAppSelector(selectSearchOptions)
-  const showSearch = searchOptions.showSearch.isActive
-  const showTagFilters = searchOptions.showTagFilters.isActive
-  const matchCaseOn = searchOptions.matchCase.isActive
-
-  function showSortOptionsContextMenu(event: React.MouseEvent) {
-    const menu = SortOptionsContextMenu(sortOption)
-    menu.showAtMouseEvent(event.nativeEvent)
-  }
-
-  function onClickShowSearch() {
-    dispatch(toggleShowSearch())
-  }
-
-  function onClickMatchCase() {
-    dispatch(toggleMatchCase())
-  }
-
-  function onClickCreateFile() {
-    plugin.createFile()
-  }
-
-  return (
-    <StyledSearchContainer { ...{ showSearch, showTagFilters, matchCaseOn } }>
-      <div className="button-bar">
-        <ObsidianIcon iconName={sortIconName} size={20} onClick={showSortOptionsContextMenu} />
-        {showSearch &&
-          <ObsidianIcon
-            iconName="uppercase-lowercase-a"
-            size={20}
-            isActive={matchCaseOn}
-            onClick={onClickMatchCase}
-          />
-        }
-        <ObsidianIcon iconName="search" size={20} isActive={showSearch} onClick={onClickShowSearch} />
-        <ObsidianIcon iconName="edit" size={20} onClick={onClickCreateFile} />
-      </div>
-      {showSearch &&
-        <>
-          <Search />
-          <hr />
-        </>
-      }
-    </StyledSearchContainer>
-  )
-}
-
-interface StyledSearchProps {
-  showSearch: boolean
-  showTagFilters: boolean
-  matchCaseOn: boolean
-}
-
-const StyledSearchContainer = styled.div<StyledSearchProps>`
-  hr {
-    border-color: var(--divider-color);
-    border-width: var(--divider-width);
-    margin: 7.5px -12px;
-  }
-  
-  .button-bar {
-    display: flex;
-    flex-direction: horizontal;
-    justify-content: flex-end;
-    padding: 10px 0;
-  }
-
-  .search-flex-wrapper {
+const styles = css`
+  .search-flex-container {
     display: flex;
     flex-direction: horizontal;
     gap: 4px;
@@ -171,5 +100,11 @@ const StyledSearchContainer = styled.div<StyledSearchProps>`
     .search-input-container {
       width: 100%;
     }
+  }
+
+  hr {
+    border-color: var(--divider-color);
+    border-width: var(--divider-width);
+    margin: 7.5px -12px;
   }
 `

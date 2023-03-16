@@ -1,6 +1,7 @@
 // Libraries
 import * as React from 'react'
-import styled from '@emotion/styled'
+import { css } from '@emotion/react'
+import classNames from 'classnames'
 // Modules
 import { FilterMeta, activateFilter } from '../../features/filters/filtersSlice'
 import { deselectAllFolders } from '../folders/foldersSlice'
@@ -27,10 +28,10 @@ export default function Filter(filter: FilterMeta) {
   const iconName = iconMap[filter.id] || 'filter'
   
   return (
-    <StyledFilter
-      className={`nav-item ${filter.isActive ? 'is-active' : ''}`}
+    <div
+      className={classNames('nav-item', { 'is-active': filter.isActive })}
+      css={styles}
       onClick={onClick}
-      {...filter} 
     >
       <ObsidianIcon iconName={iconName} />
       <div className="filter-name">
@@ -39,11 +40,11 @@ export default function Filter(filter: FilterMeta) {
       <div className="file-count">
         {fileCount}
       </div>
-    </StyledFilter>
+    </div>
   )
 }
 
-const StyledFilter = styled.div<FilterMeta>`  
+const styles = css`
   display: flex;
   flex-direction: horizontal;
   padding: 10px;
@@ -52,10 +53,5 @@ const StyledFilter = styled.div<FilterMeta>`
   .filter-name {
     line-height: 24px;
     flex: 1;
-  }
-
-  .file-count {
-    line-height: 24px;
-    color: var(--text-faint);
   }
 `

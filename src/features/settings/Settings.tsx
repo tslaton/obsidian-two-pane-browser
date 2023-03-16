@@ -1,6 +1,6 @@
 // Libraries
 import * as React from 'react'
-import styled from '@emotion/styled'
+import { css } from '@emotion/react'
 // Modules
 import PluginContext from '../../plugin/PluginContext'
 import { useAppSelector } from '../../plugin/hooks'
@@ -37,7 +37,7 @@ export default function Settings() {
   }
 
   return (
-    <StyledSettings>
+    <div css={styles}>
       <h2>Settings for Two-Pane Browser</h2>
       <h3>Tag Categories</h3>
       {tagCategories.map(tagCategory =>
@@ -63,11 +63,11 @@ export default function Settings() {
         />
         <button type="submit">Add new tag category</button>
       </form>
-    </StyledSettings>
+    </div>
   )
 }
 
-const StyledSettings = styled.div`
+const styles = css`
   .new-tag-category-form {
     display: flex;
     flex-direction: horizontal;
