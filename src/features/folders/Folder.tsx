@@ -54,7 +54,7 @@ export default function Folder(props: FolderProps) {
   const styles = css`
     margin-left: ${level*20}px;
 
-    & > .flex-folder-wrapper {
+    & > .folder-flex-container {
       display: flex;
       flex-direction: horizontal;
       padding: 10px;
@@ -71,7 +71,7 @@ export default function Folder(props: FolderProps) {
   return (
     <div css={styles}>
       <div 
-        className={classNames('nav-item', 'flex-folder-wrapper', { 'is-active' : folder.isSelected })}
+        className={classNames('nav-item', 'folder-flex-container', { 'is-active' : folder.isSelected })}
         onClick={toggleIsSelected} 
         onContextMenu={onContextMenu}
       >

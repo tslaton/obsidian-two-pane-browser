@@ -37,7 +37,7 @@ export default function Settings() {
   }
 
   return (
-    <div css={styles.self}>
+    <div css={styles}>
       <h2>Settings for Two-Pane Browser</h2>
       <h3>Tag Categories</h3>
       {tagCategories.map(tagCategory =>
@@ -67,25 +67,23 @@ export default function Settings() {
   )
 }
 
-const styles = {
-  self: css`
-    .new-tag-category-form {
-      display: flex;
-      flex-direction: horizontal;
-      align-items: flex-start;
-      gap: 10px;
-    }
+const styles = css`
+  .new-tag-category-form {
+    display: flex;
+    flex-direction: horizontal;
+    align-items: flex-start;
+    gap: 10px;
+  }
 
-    label, input, button {
-      display: block;
-    }
+  label, input, button {
+    display: block;
+  }
 
-    input[type="text"] {
-      width: 240px;
-    }
+  input[type="text"] {
+    width: 240px;
+  }
 
-    input[type="color"] {
-      padding-top: 3px;
-    }
-  `,
-}
+  input[type="color"] {
+    padding-top: 3px;
+  }
+`

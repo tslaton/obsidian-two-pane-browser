@@ -66,8 +66,8 @@ export default function Search() {
   }
 
   return (
-    <>
-      <div css={styles.searchFlexContainer}>
+    <div css={styles}>
+      <div className="search-flex-container">
         <div className="search-input-container">
           <form onSubmit={onSubmitQuery}>
             <input 
@@ -86,13 +86,13 @@ export default function Search() {
         <ObsidianIcon iconName="tags" size={22} isActive={showTagFilters} onClick={onClickShowTagFilters} />
       </div>
       {showTagFilters && <TagFiltersContainer />}
-      <hr css={styles.searchDivider} />
-    </>
+      <hr />
+    </div>
   )
 }
 
-const styles = {
-  searchFlexContainer: css`
+const styles = css`
+  .search-flex-container {
     display: flex;
     flex-direction: horizontal;
     gap: 4px;
@@ -100,10 +100,11 @@ const styles = {
     .search-input-container {
       width: 100%;
     }
-  `,
-  searchDivider: css`
+  }
+
+  hr {
     border-color: var(--divider-color);
     border-width: var(--divider-width);
     margin: 7.5px -12px;
-  `,
-}
+  }
+`

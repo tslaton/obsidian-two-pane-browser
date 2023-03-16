@@ -55,6 +55,12 @@ export default function GlobalStyles() {
         line-height: 24px;
         color: var(--text-faint);
       }
+
+      div.scroller {
+        flex: 1;
+        overflow: auto;
+        margin-bottom: var(--two-pane-browser-gutter);
+      }
   `} />
   )
 }

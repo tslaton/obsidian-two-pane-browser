@@ -38,7 +38,7 @@ export default function SearchControls() {
   }
 
   return (
-    <div css={styles.self}>
+    <div css={styles}>
       <ObsidianIcon iconName={sortIconName} size={20} onClick={showSortOptionsContextMenu} />
       {showSearch &&
         <ObsidianIcon
@@ -54,13 +54,9 @@ export default function SearchControls() {
   )
 }
 
-const styles = {
-  self: css`
-    display: flex;
-    flex-direction: horizontal;
-    justify-content: flex-end;
-    padding: 10px 0;
-  `,
-}
-
-
+const styles = css`
+  display: flex;
+  flex-direction: horizontal;
+  justify-content: flex-end;
+  padding: 10px 0;
+`

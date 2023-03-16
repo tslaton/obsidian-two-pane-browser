@@ -40,7 +40,7 @@ export default function TagFiltersContainer() {
   }
 
   return (
-    <div css={styles.self}>
+    <div css={styles}>
       <div className="tag-filters-flex-controls">
         <label htmlFor="tag-filter-options">Match:</label>
         <select id="tag-filter-options" value={matchMode} onChange={onChangeMatchMode}>
@@ -73,38 +73,36 @@ export default function TagFiltersContainer() {
   )
 }
 
-const styles = {
-  self: css`
-    label[for="tag-filter-options"] {
-      display: block;
-    }
+const styles = css`
+  label[for="tag-filter-options"] {
+    display: block;
+  }
 
-    #tag-filter-options {
-      background: none;
-      box-shadow: none;
-      appearance: auto;
+  #tag-filter-options {
+    background: none;
+    box-shadow: none;
+    appearance: auto;
 
-      &:hover {
-        background-color: var(--nav-item-background-hover);
-      }
+    &:hover {
+      background-color: var(--nav-item-background-hover);
     }
+  }
 
-    .tag-filters-flex-controls {
-      display: flex;
-      flex-direction: horizontal;
-      align-items: center;
-      padding: 2px 2px;
-      gap: 4px;
-    }
+  .tag-filters-flex-controls {
+    display: flex;
+    flex-direction: horizontal;
+    align-items: center;
+    padding: 2px 2px;
+    gap: 4px;
+  }
 
-    .tag-filters-flex-container {
-      display: flex;
-      flex-direction: horizontal;
-      flex-wrap: wrap;
-      align-items: center;
-      column-gap: 4px;
-      row-gap: 8px;
-      padding: 2px 2px;
-    }
-  `
-}
+  .tag-filters-flex-container {
+    display: flex;
+    flex-direction: horizontal;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 4px;
+    row-gap: 8px;
+    padding: 2px 2px;
+  }
+`

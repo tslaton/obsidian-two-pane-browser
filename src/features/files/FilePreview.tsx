@@ -13,12 +13,7 @@ import { InteractiveFile, toggleFileSelection, stopAwaitingRenameFile } from './
 import Tag from '../tags/Tag'
 import ObsidianMarkdown from '../../common/ObsidianMarkdown'
 
-interface FilePreviewProps {
-  file: InteractiveFile
-}
-
-export default function FilePreview(props: FilePreviewProps) {
-  const { file } = props
+export default function FilePreview(file: InteractiveFile) {
   const { name, path, stat, preview, tags, isAwaitingRename, searchResults } = file
   const basename = name.replace(/\.[^/.]+$/, '')
   const plugin = React.useContext(PluginContext)
@@ -42,12 +37,12 @@ export default function FilePreview(props: FilePreviewProps) {
   return (
     <div 
       className={classNames('nav-item', { 'is-selected': file.isSelected, 'is-active': file.isActive })}
-      css={styles.self}
+      css={styles}
       onClick={onClick} 
       onContextMenu={onContextMenu}
     >
       <EditableName 
-        css={styles.filename}
+        className="file-name"
         name={basename}
         path={path}
         extension=".md"
@@ -55,8 +50,8 @@ export default function FilePreview(props: FilePreviewProps) {
         onBlurAction={stopAwaitingRenameFile(path)}
       />
       <ObsidianMarkdown content={preview} path={file.path} />      
-      <div css={styles.fileInfoFlexContainer}>
-        <div css={styles.lastModified}>
+      <div className="file-info-flex-container">
+        <div className="last-modified">
           {moment(stat.mtime).fromNow()}
         </div>
         {tags.map(tag => 
@@ -68,27 +63,28 @@ export default function FilePreview(props: FilePreviewProps) {
   )
 }
 
-const styles = {
-  self: css`
-    padding: 10px;
-    border-radius: 4px;
-  `,
-  filename: css`
+const styles = css`
+  padding: 10px;
+  border-radius: 4px;
+
+  .file-name {
     font-size: 16px;
     font-weight: bold;
-  `,
-  fileInfoFlexContainer: css`
+  }
+
+  .file-info-flex-container {
     display: flex;
     flex-direction: horizontal;
     flex-wrap: wrap;
     align-items: center;
-    
+  
     .tag {
       margin: 2px 0.5px;
     }
-  `,
-  lastModified: css`
+  }
+
+  .last-modified {
     color: var(--text-faint);
     margin-right: 4px;
-  `,
-}
+  }
+`

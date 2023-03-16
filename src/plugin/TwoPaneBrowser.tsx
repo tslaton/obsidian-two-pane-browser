@@ -49,10 +49,10 @@ export default function TwoPaneBrowser() {
   }
 
   return (
-    <div css={styles.self}>
+    <div css={styles}>
       <GlobalStyles />
-      <div css={styles.leftPane}>
-        <div css={styles.sectionTitleFlexContainer}>
+      <div className="left-pane">
+        <div className="section-title-flex-container">
           <div className="section-title">
             Filters
           </div>
@@ -62,22 +62,22 @@ export default function TwoPaneBrowser() {
             <Filter key={filter.id} {...filter} />
           )}
         </div>
-        <div css={styles.sectionTitleFlexContainer}>
+        <div className="section-title-flex-container">
           <div className="section-title">
             Folders
           </div>
           <ObsidianIcon iconName="folder-plus" onClick={addNewTopLevelFolder} />
         </div>
-        <div css={styles.scroller}>
+        <div className="scroller">
           {topLevelFolders.map(folder =>
             <Folder key={folder.path} folder={folder} level={0} />
           )}
         </div>
       </div>
-      <div css={styles.rightPane}>
+      <div className="right-pane">
         <SearchControls />
         {showSearch && <Search />}
-        <div css={styles.sectionTitleFlexContainer}>
+        <div className="section-title-flex-container">
           <div className="section-title">
             Files
           </div>
@@ -85,9 +85,9 @@ export default function TwoPaneBrowser() {
             {filesInScope.length}
           </div>
         </div>
-        <div css={styles.scroller}>
+        <div className="scroller">
           {filesInScope.map(file =>
-            <FilePreview key={file.path} file={file} />
+            <FilePreview key={file.path} {...file} />
           )}
         </div>
       </div>
@@ -95,49 +95,33 @@ export default function TwoPaneBrowser() {
   )
 }
 
-const styles = {
-  self: css`
-    display: flex;
-    flex-direction: horizontal;
-    height: 100%;  
-  `,
-  scroller: css`
-    flex: 1;
-    overflow: auto;
-    margin-bottom: var(--two-pane-browser-gutter);
-  `,
-  leftPane: css`
+const styles = css`
+  display: flex;
+  flex-direction: horizontal;
+  height: 100%;
+
+  .left-pane {
     width: 280px;
     background-color: var(--background-secondary);
     padding: 0 var(--two-pane-browser-gutter);
     display: flex;
     flex-direction: column;
-  `,
-  rightPane: css`
+  }
+
+  .right-pane {
     flex: 1;
     background-color: var(--background-primary);
     padding: 0 var(--two-pane-browser-gutter);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-  `,
-  sectionTitleFlexContainer: css`
+  }
+
+  .section-title-flex-container {
     display: flex;
     flex-direction: horizontal;
     justify-content: space-between;
     align-items: center;
-
-    .section-title {
-      font-variant: var(--h2-variant);
-      letter-spacing: -0.015em;
-      line-height: var(--h2-line-height);
-      font-size: var(--h2-size);
-      color: var(--h2-color);
-      font-weight: var(--h2-weight);
-      font-style: var(--h2-style);
-      font-family: var(--h2-font);
-      margin: var(--two-pane-browser-gutter) 0;
-    }
 
     .clickable-icon {
       height: fit-content;
@@ -149,5 +133,17 @@ const styles = {
         visibility: visible;
       }
     }
-  `,
-}
+  }
+
+  .section-title {
+    font-variant: var(--h2-variant);
+    letter-spacing: -0.015em;
+    line-height: var(--h2-line-height);
+    font-size: var(--h2-size);
+    color: var(--h2-color);
+    font-weight: var(--h2-weight);
+    font-style: var(--h2-style);
+    font-family: var(--h2-font);
+    margin: var(--two-pane-browser-gutter) 0;
+  }
+`

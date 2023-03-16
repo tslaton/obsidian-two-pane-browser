@@ -46,7 +46,7 @@ export default function TagCategorySettings({ tagCategory }: { tagCategory: TagC
   }
   
   return (
-    <div css={styles.self}>
+    <div css={styles}>
       <form onSubmit={onSubmitUpdateTagCategory}>
         <div className="update-tag-category-inputs">
           <input 
@@ -83,19 +83,17 @@ export default function TagCategorySettings({ tagCategory }: { tagCategory: TagC
   )
 }
 
-const styles = {
-  self: css`
+const styles = css`
+  margin-bottom: 10px;
+
+  .update-tag-category-inputs {
+    display: flex;
+    flex-direction: horizontal;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .update-tag-category-inputs, textarea {
     margin-bottom: 10px;
-
-    .update-tag-category-inputs {
-      display: flex;
-      flex-direction: horizontal;
-      align-items: flex-start;
-      gap: 10px;
-    }
-
-    .update-tag-category-inputs, textarea {
-      margin-bottom: 10px;
-    }
-  `,
-}
+  }
+`

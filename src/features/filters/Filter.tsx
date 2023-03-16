@@ -30,7 +30,7 @@ export default function Filter(filter: FilterMeta) {
   return (
     <div
       className={classNames('nav-item', { 'is-active': filter.isActive })}
-      css={styles.self}
+      css={styles}
       onClick={onClick}
     >
       <ObsidianIcon iconName={iconName} />
@@ -44,16 +44,14 @@ export default function Filter(filter: FilterMeta) {
   )
 }
 
-const styles = {
-  self: css`
-    display: flex;
-    flex-direction: horizontal;
-    padding: 10px;
-    border-radius: 4px;
+const styles = css`
+  display: flex;
+  flex-direction: horizontal;
+  padding: 10px;
+  border-radius: 4px;
 
-    .filter-name {
-      line-height: 24px;
-      flex: 1;
-    }
-  `,
-}
+  .filter-name {
+    line-height: 24px;
+    flex: 1;
+  }
+`
