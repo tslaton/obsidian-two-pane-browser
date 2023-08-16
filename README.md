@@ -34,3 +34,7 @@ Global filters are a feature in the left pane that perform predefined or saved s
 ## API Documentation
 
 See https://github.com/obsidianmd/obsidian-api
+
+---
+
+2023/08/16 update: I probably won't finish this, at least in its current form. The UI for tags showing up atop the note previews doesn't scale clearly, especially on mobile. Apps like Bear *don't even show any subtags* and do away with folders in favor of using only hierarchical tags. It would still improve Obsidian for my usage patterns if it were to bring the hierarchical tags front-and-center on desktop + mobile and show note previews instead of search results for tags (basically, implement the Bear sidebar instead of the Ulysses one x Bear).
