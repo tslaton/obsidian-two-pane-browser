@@ -29,7 +29,7 @@ export default function EditableName(props: EditableNameProps) {
   }, [isAwaitingRename])
 
   // Only enable clicks when folder.isAwaitingRename
-  // During this time, stop propgation to flex-folder-wrapper to avoid selecting 
+  // During this time, stop propgation to avoid selecting 
   function onClick(event: React.MouseEvent) {
     event.stopPropagation()
   }

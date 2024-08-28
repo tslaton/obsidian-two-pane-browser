@@ -10,10 +10,18 @@ import store from './plugin/store'
 import TwoPaneBrowserView, { TWO_PANE_BROWSER_VIEW } from './plugin/view'
 import TwoPaneBrowserSettingTab from './plugin/settingsTab'
 import { TwoPaneBrowserSettings, DEFAULT_SETTINGS, loadSettings } from './features/settings/settingsSlice'
-import { FileMeta, loadFiles, addFile, updateFile, removeFile, activateFile } from './features/files/filesSlice'
+import { 
+	FileMeta, FileSearchResultsByPath, 
+	loadFiles, addFile, updateFile, removeFile, activateFile,
+} from './features/files/filesSlice'
 import { FolderMeta, loadFolders, addFolder, updateFolder, removeFolder, awaitRenameFolder } from './features/folders/foldersSlice'
 import { revealTag } from './features/tags/extraActions'
-import { getParentPath, selectElementContent } from './utils'
+import { requestSearchResults, fulfillSearchResults, failSearchResults } from './features/search/extraActions'
+import { 
+	getParentPath, selectElementContent, 
+	collapseWhitespace, stripHashtags,
+	tokenizeQuery, getMatchingCoordinatePairs, dedupeCoordinatePairs, getSearchResults,
+} from './utils'
 
 export default class TwoPaneBrowserPlugin extends Plugin {
 	// Used to avoid a timeout waiting for the beginning of a new file 
@@ -154,7 +162,7 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		}))
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		// this.registerInterval(window.setInterval(() => console.log(store.getState()), 10 * 1000))
+		this.registerInterval(window.setInterval(() => console.log(store.getState()), 10 * 1000))
 	}
 
 	onunload() {
@@ -171,47 +179,48 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		store.dispatch(loadSettings(settings))
 	}
 
-	async inflatedFileMetaFromTFile(file: TFile, fileCache: CachedMetadata|null=null): Promise<FileMeta> {
+	// FUTURE: leverage cache.sections to do Headers in previews
+	// FUTURE: process only the beginning of a potentially long string
+	// Ref: https://www.theinformationlab.co.uk/2020/01/03/regex-extracting-the-first-n-words/
+	async getFilePreview(file: TFile, numLines=2) {
 		const contents = await app.vault.cachedRead(file)
-		// FUTURE: leverage cache.sections to do Headers in previews
-		// FUTURE: process only the beginning of a potentially long string
-		// Ref: https://www.theinformationlab.co.uk/2020/01/03/regex-extracting-the-first-n-words/
-		const createFilePreview = (numLines=2) => {
-			let preview = ''
-			const lines = contents.split('\n')
-			let lineCount = 0
-			for (let line of lines) {
-				if (lineCount >= numLines) {
-					break
-				}
-				// Strip out tags and afterward, blank lines
-				line = line.replace(/#\S+/g, '').replace(/\s+/g, ' ').trim()
-				if (line) {
-					preview += `${line}\n`
-					lineCount += 1
-				}
+		let preview = ''
+		const lines = contents.split('\n')
+		let lineCount = 0
+		for (let line of lines) {
+			if (lineCount >= numLines) {
+				break
 			}
-			return preview.trim()
+			// Strip out tags and afterward, blank lines
+			line = collapseWhitespace(stripHashtags(line))
+			if (line) {
+				preview += `${line}\n`
+				lineCount += 1
+			}
 		}
+		return preview.trim()
+	}
+
+	getFileTags(file: TFile, fileCache: CachedMetadata|null=null) {
 		// https://stackoverflow.com/a/71896674
-		const getTags = () => {
-			const allTags = new Set<string>()
-			if (!fileCache) {
-				fileCache = this.app.metadataCache.getFileCache(file)
-			} 
-			if (fileCache) {
-				const tags = getAllTags(fileCache) || []
-				for (let tag of tags) {
-					allTags.add(tag)
-				}
+		const allTags = new Set<string>()
+		if (!fileCache) {
+			fileCache = this.app.metadataCache.getFileCache(file)
+		} 
+		if (fileCache) {
+			const tags = getAllTags(fileCache) || []
+			for (let tag of tags) {
+				allTags.add(tag)
 			}
-			return [...allTags]
 		}
-		return {
-			...this.fileMetaFromTFile(file),
-			preview: createFilePreview(),
-			tags: getTags(),
-		}
+		return [...allTags]
+	}
+
+	async inflatedFileMetaFromTFile(f: TFile, fileCache: CachedMetadata|null=null) {
+		const file = this.fileMetaFromTFile(f)
+		file.preview = await this.getFilePreview(f)
+		file.tags = this.getFileTags(f, fileCache)
+		return file
 	}
 
 	fileMetaFromTFile(file: TFile): FileMeta {
@@ -316,4 +325,54 @@ export default class TwoPaneBrowserPlugin extends Plugin {
 		}
 		fileLeaf.openFile(f)
 	}
+
+	async search(paths: string[], query: string, matchCase=false) {
+		store.dispatch(requestSearchResults())
+		try {
+			const files = paths
+				.map(path => this.app.vault.getAbstractFileByPath(path))
+				.filter((file): file is TFile => file !== null)
+			const tokens = tokenizeQuery(query)
+			const flags = matchCase ? 'dg' : 'dgi'
+			const results: FileSearchResultsByPath = {}
+			for (let file of files) {
+				const titleMatchingCoordinatePairsAcrossTokens = []
+				const contentMatchingCoordinatePairsAcrossTokens = []
+				const contents = await app.vault.cachedRead(file)
+				let score = 0
+				for (let token of tokens) {
+					const regex = RegExp(token, flags)
+					// Search the title
+					const titleMatchingCoordinatePairs = getMatchingCoordinatePairs(regex, file.basename)
+					titleMatchingCoordinatePairsAcrossTokens.push(...titleMatchingCoordinatePairs)
+					// Search the file contents
+					const contentMatchingCoordinatePairs = getMatchingCoordinatePairs(regex, contents)
+					contentMatchingCoordinatePairsAcrossTokens.push(...contentMatchingCoordinatePairs)
+					const numMatches = titleMatchingCoordinatePairs.length + contentMatchingCoordinatePairs.length
+					if (numMatches === 0) {
+						score = 0
+						break
+					}
+					score += numMatches
+				}
+				if (score > 0) {
+					results[file.path] = {
+						score,
+						titleMatches: dedupeCoordinatePairs(titleMatchingCoordinatePairsAcrossTokens), 
+						contentMatches: getSearchResults(
+							dedupeCoordinatePairs(contentMatchingCoordinatePairsAcrossTokens),
+							contents,
+						),
+					}
+				}
+			}
+			store.dispatch(fulfillSearchResults(results))
+		}
+		catch(error: unknown) {
+			const message = error instanceof Error
+				? error.message
+				: 'Unknown error'
+			store.dispatch(failSearchResults(message))
+		}
+	}	
 }

@@ -1,7 +1,7 @@
 // Libraries
 import * as React from 'react'
-import styled from '@emotion/styled'
-import { FolderIcon, FolderOpenIcon } from 'lucide-react'
+import { css } from '@emotion/react'
+import classNames from 'classnames'
 // Modules
 import PluginContext from '../../plugin/PluginContext'
 import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
@@ -14,6 +14,7 @@ import {
 } from './foldersSlice'
 import { makeSelectFileCountByFolder } from '../files/filesSlice'
 import { deactivateAllFilters } from '../filters/filtersSlice'
+import ObsidianIcon from '../../common/ObsidianIcon'
 
 interface FolderProps {
   folder: InteractiveFolder
@@ -24,7 +25,7 @@ export default function Folder(props: FolderProps) {
   const { folder, level } = props
   const plugin = React.useContext(PluginContext)
   const dispatch = useAppDispatch()
-  const Icon = folder.isExpanded ? FolderOpenIcon : FolderIcon
+  const iconName = folder.isExpanded ? 'folder-open' : 'folder-closed'
   const selectChildFoldersByParentPath = React.useMemo(makeSelectChildFoldersByParentPath, [])
   const childFolders = useAppSelector(state => selectChildFoldersByParentPath(state, folder.path))
   const selectFileCountByFolder = React.useMemo(makeSelectFileCountByFolder, [])
@@ -50,16 +51,31 @@ export default function Folder(props: FolderProps) {
     menu.showAtMouseEvent(event.nativeEvent)
   }
 
+  const styles = css`
+    margin-left: ${level*20}px;
+
+    & > .folder-flex-container {
+      display: flex;
+      flex-direction: horizontal;
+      padding: 10px;
+      border-radius: 4px;
+      pointer-events: ${folder.isAwaitingRename ? 'none' : 'initial' };
+    }
+
+    .folder-name {
+      line-height: 24px;
+      flex: 1;
+    }
+  `
+
   return (
-    <StyledFolder {...props}>
+    <div css={styles}>
       <div 
-        className={`flex-folder-wrapper nav-item ${folder.isSelected ? 'is-active' : ''}`} 
+        className={classNames('nav-item', 'folder-flex-container', { 'is-active' : folder.isSelected })}
         onClick={toggleIsSelected} 
         onContextMenu={onContextMenu}
       >
-        <div className="clickable-icon" onClick={toggleIsExpanded}>
-          <Icon size={18} />
-        </div>
+        <ObsidianIcon iconName={iconName} onClick={toggleIsExpanded} />
         <EditableName
           className="folder-name"
           name={folder.name}
@@ -74,28 +90,6 @@ export default function Folder(props: FolderProps) {
       {folder.isExpanded && childFolders.map(childFolder =>
         <Folder key={childFolder.path} folder={childFolder} level={level + 1} />
       )}
-    </StyledFolder>
+    </div>
   )
 }
-
-const StyledFolder = styled.div<FolderProps>`
-  margin-left: ${props => `${props.level*20}px`};
-
-  & > .flex-folder-wrapper {
-    display: flex;
-    flex-direction: horizontal;
-    padding: 10px;
-    border-radius: 4px;
-    pointer-events: ${props => props.folder.isAwaitingRename ? 'none' : 'initial' };
-  }
-
-  .folder-name {
-    line-height: 24px;
-    flex: 1;
-  }
-
-  .file-count {
-    line-height: 24px;
-    color: var(--text-faint);
-  }
-`

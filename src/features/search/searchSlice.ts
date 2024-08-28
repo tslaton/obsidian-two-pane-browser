@@ -2,40 +2,49 @@
 import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit'
 // Modules
 import type { RootState } from '../../plugin/store'
-import { selectFilesInScope } from '../files/filesSlice'
+import { InteractiveFile, selectFilesInScope } from '../files/filesSlice'
 import { revealTag } from '../tags/extraActions'
-
-interface SearchOption {
-  id: string
-  name: string
-  isActive: boolean
-}
+import { requestSearchResults, fulfillSearchResults, failSearchResults, clearSearchResults } from './extraActions'
 
 export interface SortOption {
   property: 'filename' | 'mtime' | 'ctime'
   direction: 'asc' | 'desc'
 }
 
+type resultsStatus = 'requested' | 'fulfilled' | 'failed' | null 
+
 export const searchSlice = createSlice({
   name: 'search',
   initialState: {
     query: '',
-    options: [
-      { id: 'show-search', name: 'Show Search', isActive: false },
-      { id: 'show-tag-filters', name: 'Show Tag Filters', isActive: false },
-    ] as SearchOption[],
+    searchInputHasFocus: false,
+    options: {
+      showSearch: { name: 'Show Search', isActive: false },
+      showTagFilters: { name: 'Show Tag Filters', isActive: false },
+      matchCase: { name: 'Match Case', isActive: false },
+    },
     sort: { property: 'mtime', direction: 'desc' } as SortOption,
+    resultsInfo: {
+      status: null as resultsStatus,
+      error: null as string | null,
+    },
   },
   reducers: {
     updateSearchQuery(state, action: PayloadAction<string>) {
-      state.query = action.payload
+      const query = action.payload
+      state.query = query
     },
-    toggleSearchOption(state, action: PayloadAction<string>) {
-      const id = action.payload
-      const option = state.options.find(option => option.id === id)
-      if (option) {
-        option.isActive = !option.isActive
-      }
+    setSearchInputHasFocus(state, action: PayloadAction<boolean>) {
+      state.searchInputHasFocus = action.payload
+    },
+    toggleShowSearch(state) {
+      state.options.showSearch.isActive = !state.options.showSearch.isActive
+    },
+    toggleShowTagFilters(state) {
+      state.options.showTagFilters.isActive = !state.options.showTagFilters.isActive
+    },
+    toggleMatchCase(state) {
+      state.options.matchCase.isActive = !state.options.matchCase.isActive
     },
     setSortOption(state, action: PayloadAction<SortOption>) {
       state.sort = action.payload
@@ -43,25 +52,54 @@ export const searchSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(clearSearchResults, (state) => {
+        state.query = ''
+        state.resultsInfo = {
+          status: null,
+          error: null,
+        }
+      })
       .addCase(revealTag, (state) => {
-        state.options[0].isActive = true
-        state.options[1].isActive = true
+        state.options.showSearch.isActive = true
+        state.options.showTagFilters.isActive = true
+      })
+      .addCase(requestSearchResults, (state) => {
+        state.resultsInfo = {
+          status: 'requested',
+          error: null,
+        }
+      })
+      .addCase(fulfillSearchResults, (state) => {
+        state.resultsInfo = {
+          status: 'fulfilled',
+          error: null,
+        }
+      })
+      .addCase(failSearchResults, (state, action: PayloadAction<string>) => {
+        state.resultsInfo = {
+          status: 'failed',
+          error: action.payload,
+        }
       })
   },
 })
 
-export const { updateSearchQuery, toggleSearchOption, setSortOption } = searchSlice.actions
+export const { 
+  updateSearchQuery, setSearchInputHasFocus,
+  toggleShowSearch, toggleShowTagFilters, toggleMatchCase, setSortOption,
+} = searchSlice.actions
 
 export const selectSearchQuery = (state: RootState) => state.search.query
 
+export const selectSearchInputHasFocus = (state: RootState) => state.search.searchInputHasFocus
+
 export const selectSearchOptions = (state: RootState) => state.search.options
 
-export const selectActiveSearchOptions = createSelector(
-  selectSearchOptions,
-  options => options.filter(option => option.isActive === true)
-)
+export const selectSearchResultsInfo = (state: RootState) => state.search.resultsInfo
 
 export const selectSortOption = (state: RootState) => state.search.sort
+
+export const selectSearchResults = (state: RootState) => state.search.resultsInfo
 
 export const selectSortedFilesInScope = createSelector(
   selectFilesInScope,
@@ -82,6 +120,20 @@ export const selectSortedFilesInScope = createSelector(
         return 0
       }
     })
+  }
+)
+
+export const selectQueriedFilesInScope = createSelector(
+  selectSortedFilesInScope,
+  selectSearchResultsInfo,
+  (sortedFilesInScope, searchResultsInfo) => {
+    if (searchResultsInfo.status === 'fulfilled') {
+      const queriedFilesInScope: InteractiveFile[] = sortedFilesInScope.filter(file => file.searchResults?.score)
+      return queriedFilesInScope.sort((a, b) => b.searchResults!.score - a.searchResults!.score)
+    }
+    else {
+      return sortedFilesInScope
+    }
   }
 )
 

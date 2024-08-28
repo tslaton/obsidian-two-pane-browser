@@ -1,99 +1,98 @@
 // Libraries
 import { debounce } from 'obsidian'
 import * as React from 'react'
-import styled from '@emotion/styled'
-import { SearchIcon, EditIcon, TagsIcon, SortAscIcon, SortDescIcon } from 'lucide-react'
+import { css } from '@emotion/react'
 // Modules
 import PluginContext from '../../plugin/PluginContext'
 import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
-import SortOptionsContextMenu from './SortOptionsContextMenu'
-import { selectSortOption } from '../search/searchSlice'
-import { selectActiveSearchOptions, toggleSearchOption, updateSearchQuery } from '../search/searchSlice'
+import ObsidianIcon from '../../common/ObsidianIcon'
+import { 
+  selectSearchQuery, selectSearchOptions, setSearchInputHasFocus,
+  toggleShowTagFilters, updateSearchQuery
+} from '../search/searchSlice'
+import { clearSearchResults } from './extraActions'
 import TagFiltersContainer from '../tags/TagFiltersContainer'
+import { selectFilesInScope } from '../files/filesSlice'
 
-// For clicking tags: https://discord.com/channels/686053708261228577/840286264964022302/1077674157107576872
 export default function Search() {
   const plugin = React.useContext(PluginContext)
   const dispatch = useAppDispatch()
-  const sortOption = useAppSelector(selectSortOption)
-  const SortIcon = sortOption.direction === 'asc' ? SortAscIcon : SortDescIcon
-  const activeOptions = useAppSelector(selectActiveSearchOptions)
-  const showSearch = !!activeOptions.find(option => option.id === 'show-search')?.isActive
-  const showTags = !!activeOptions.find(option => option.id === 'show-tag-filters')?.isActive
+  const query = useAppSelector(selectSearchQuery)
+  const searchOptions = useAppSelector(selectSearchOptions)
+  const matchCaseOn = searchOptions.matchCase.isActive
+  const showTagFilters = searchOptions.showTagFilters.isActive
+  const filesInScope = useAppSelector(selectFilesInScope)
+  const filePathsInScope = filesInScope.map(f => f.path)
+  const searchInputRef = React.useRef<HTMLInputElement>(null)
 
-  function showSortOptionsContextMenu(event: React.MouseEvent) {
-    const menu = SortOptionsContextMenu(sortOption)
-    menu.showAtMouseEvent(event.nativeEvent)
-  }
+  React.useEffect(() => {
+    searchInputRef.current!.focus()
+  }, [])
 
-  function toggleShowSearch() {
-    dispatch(toggleSearchOption('show-search'))
-  }
-
-  function createNewDocument() {
-    plugin.createFile()
-  }
+  const debouncedExecuteSearch = debounce((currentQuery: string) => {
+    plugin.search(filePathsInScope, currentQuery, matchCaseOn)
+  }, 500, true)
 
   function onChangeQuery(event: React.ChangeEvent<HTMLInputElement>) {
-    dispatch(updateSearchQuery(event.target.value))
+    const currentQuery = event.target.value
+    dispatch(updateSearchQuery(currentQuery))
+    if (currentQuery) {
+      debouncedExecuteSearch(currentQuery)
+    }
+    else {
+      dispatch(clearSearchResults())
+    }
   }
-  const debouncedUpdateSearchQuery = debounce(onChangeQuery, 1000, true)
 
-  function toggleShowTagFilters() {
-    dispatch(toggleSearchOption('show-tag-filters'))
+  function onClickClearQuery() {
+    dispatch(clearSearchResults())
+  }
+
+  function onSubmitQuery(event: React.FormEvent) {
+    event.preventDefault()
+    plugin.search(filePathsInScope, query, matchCaseOn)
+  }
+
+  function onFocusSearchInput(event: React.FocusEvent) {
+    dispatch(setSearchInputHasFocus(true))
+  }
+
+  function onBlurSearchInput(event: React.FocusEvent) {
+    dispatch(setSearchInputHasFocus(false))
+  }
+
+  function onClickShowTagFilters() {
+    dispatch(toggleShowTagFilters())
   }
 
   return (
-    <StyledSearch {...{showSearch, showTags}}>
-      <div className="button-bar">
-        <div className="clickable-icon" onClick={showSortOptionsContextMenu}>
-          <SortIcon size={20} />
+    <div css={styles}>
+      <div className="search-flex-container">
+        <div className="search-input-container">
+          <form onSubmit={onSubmitQuery}>
+            <input 
+              type="search" 
+              name="scoped-search"
+              placeholder="Type to start search..."
+              value={query}
+              onChange={onChangeQuery}
+              onFocus={onFocusSearchInput}
+              onBlur={onBlurSearchInput}
+              ref={searchInputRef}
+            />
+          </form>
+          {query && <div className="search-input-clear-button" onClick={onClickClearQuery} />}
         </div>
-        <div className="clickable-icon" onClick={toggleShowSearch}>
-          <SearchIcon size={20} />
-        </div>
-        <div className="clickable-icon" onClick={createNewDocument}>
-          <EditIcon size={20} />
-        </div>
+        <ObsidianIcon iconName="tags" size={22} isActive={showTagFilters} onClick={onClickShowTagFilters} />
       </div>
-      {showSearch &&
-        <>
-          <div className="search-flex-wrapper">
-            <div className="search-input-container">
-              <input type="text" name="scoped-search" onChange={debouncedUpdateSearchQuery} />
-            </div>
-            <div className="clickable-icon" onClick={toggleShowTagFilters}>
-              <TagsIcon size={22} />
-            </div>
-          </div>
-          {showTags && <TagFiltersContainer />}
-          <hr />
-        </>
-      }
-    </StyledSearch>
+      {showTagFilters && <TagFiltersContainer />}
+      <hr />
+    </div>
   )
 }
 
-interface StyledSearchProps {
-  showSearch: boolean
-  showTags: boolean
-}
-
-const StyledSearch = styled.div<StyledSearchProps>`
-  hr {
-    border-color: var(--divider-color);
-    border-width: var(--divider-width);
-    margin: 7.5px -12px;
-  }
-  
-  .button-bar {
-    display: flex;
-    flex-direction: horizontal;
-    justify-content: flex-end;
-    padding: 10px 0;
-  }
-
-  .search-flex-wrapper {
+const styles = css`
+  .search-flex-container {
     display: flex;
     flex-direction: horizontal;
     gap: 4px;
@@ -103,11 +102,9 @@ const StyledSearch = styled.div<StyledSearchProps>`
     }
   }
 
-  .lucide-search {
-    color: ${props => props.showSearch ? 'var(--color-accent)' : 'inherit'};
-  }
-  
-  .lucide-tags {
-    color: ${props => props.showTags ? 'var(--color-accent)' : 'inherit'};
+  hr {
+    border-color: var(--divider-color);
+    border-width: var(--divider-width);
+    margin: 7.5px -12px;
   }
 `

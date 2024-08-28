@@ -1,34 +1,28 @@
 // Libraries
 import * as React from 'react'
-import { css, Global } from '@emotion/react'
-import styled from '@emotion/styled'
-import { FolderPlus } from 'lucide-react'
+import { css } from '@emotion/react'
 // Modules
 import { useAppSelector } from './hooks'
 import PluginContext from './PluginContext'
+import GlobalStyles from './GlobalStyles'
 import Folder from '../features/folders/Folder'
 import { selectTopLevelFolders } from '../features/folders/foldersSlice'
 import FilePreview from '../features/files/FilePreview'
 import Filter from '../features/filters/Filter'
 import { selectFilters } from '../features/filters/filtersSlice'
+import SearchControls from '../features/search/SearchControls'
 import Search from '../features/search/Search'
-import { selectTagCategoryByTagName, selectTagFilteredFilesInScope } from '../features/tags/tagFiltersSlice'
-import { alphaColor } from '../utils'
+import { selectSearchOptions } from '../features/search/searchSlice'
+import { selectSearchInputHasFocus } from '../features/search/searchSlice'
+import { selectTagFilteredFilesInScope } from '../features/tags/tagFiltersSlice'
+import ObsidianIcon from '../common/ObsidianIcon'
 
 export default function TwoPaneBrowser() {
   const plugin = React.useContext(PluginContext)
   const topLevelFolders = useAppSelector(selectTopLevelFolders)
   const filesInScope = useAppSelector(selectTagFilteredFilesInScope)
   const filters = useAppSelector(selectFilters)
-  const tagCategoryByTagName = useAppSelector(selectTagCategoryByTagName)
-  let tagsCSS = ''
-  for (let [tagName, { style }] of Object.entries(tagCategoryByTagName)) {
-    tagName = tagName.substring(1)
-    tagsCSS += `.cm-tag-${tagName} { 
-      color: ${style.color}; 
-      background-color: ${alphaColor(style.color)} 
-    }`
-  }
+  const showSearch = useAppSelector(selectSearchOptions).showSearch.isActive
 
   // FUTURE: Consider fetching files more efficiently (ie, before filters only fetched files for paths in scope)
   React.useEffect(() => {
@@ -40,10 +34,13 @@ export default function TwoPaneBrowser() {
   // TODO: Decide if this behavior is actually desired
   // It is slighty annoying if you just want to browse files vs. the open one
   // However, you could always open your "compare" file in a tab or pane first
+  const searchInputHasFocus = useAppSelector(selectSearchInputHasFocus)
   React.useEffect(() => {
-    const activeFile = filesInScope.find(file => file.isActive)
-    if (!activeFile && filesInScope.length > 0) {
-      plugin.openFile(filesInScope[0])
+    if (!searchInputHasFocus) {
+      const activeFile = filesInScope.find(file => file.isActive)
+      if (!activeFile && filesInScope.length > 0) {
+        plugin.openFile(filesInScope[0])
+      }
     }
   }, [filesInScope])
 
@@ -52,30 +49,24 @@ export default function TwoPaneBrowser() {
   }
 
   return (
-    <StyledTwoPaneBrowser>
-      <Global styles={css`    
-        :root {
-          --two-pane-browser-gutter: 12px;
-        }
-        ${tagsCSS}
-      `}
-      />
+    <div css={styles}>
+      <GlobalStyles />
       <div className="left-pane">
-        <div className="section-title">
-          Filters
+        <div className="section-title-flex-container">
+          <div className="section-title">
+            Filters
+          </div>
         </div>
         <div>
           {filters.map(filter =>
             <Filter key={filter.id} {...filter} />
           )}
         </div>
-        <div className="flex-section-title-wrapper">
+        <div className="section-title-flex-container">
           <div className="section-title">
             Folders
           </div>
-          <div className="clickable-icon" onClick={addNewTopLevelFolder}>
-            <FolderPlus size={18} />
-          </div>
+          <ObsidianIcon iconName="folder-plus" onClick={addNewTopLevelFolder} />
         </div>
         <div className="scroller">
           {topLevelFolders.map(folder =>
@@ -84,8 +75,9 @@ export default function TwoPaneBrowser() {
         </div>
       </div>
       <div className="right-pane">
-        <Search />
-        <div className="flex-section-title-wrapper">
+        <SearchControls />
+        {showSearch && <Search />}
+        <div className="section-title-flex-container">
           <div className="section-title">
             Files
           </div>
@@ -95,15 +87,15 @@ export default function TwoPaneBrowser() {
         </div>
         <div className="scroller">
           {filesInScope.map(file =>
-            <FilePreview key={file.path} file={file} />
+            <FilePreview key={file.path} {...file} />
           )}
         </div>
       </div>
-    </StyledTwoPaneBrowser>
+    </div>
   )
 }
 
-const StyledTwoPaneBrowser = styled.div`
+const styles = css`
   display: flex;
   flex-direction: horizontal;
   height: 100%;
@@ -123,26 +115,9 @@ const StyledTwoPaneBrowser = styled.div`
     overflow: hidden;
     display: flex;
     flex-direction: column;
-
-    .file-count { 
-      line-height: 24px;
-      color: var(--text-faint);
-    }
   }
 
-  .section-title {
-    font-variant: var(--h2-variant);
-    letter-spacing: -0.015em;
-    line-height: var(--h2-line-height);
-    font-size: var(--h2-size);
-    color: var(--h2-color);
-    font-weight: var(--h2-weight);
-    font-style: var(--h2-style);
-    font-family: var(--h2-font);
-    margin: var(--two-pane-browser-gutter) 0;
-  }
-
-  .flex-section-title-wrapper {
+  .section-title-flex-container {
     display: flex;
     flex-direction: horizontal;
     justify-content: space-between;
@@ -160,9 +135,15 @@ const StyledTwoPaneBrowser = styled.div`
     }
   }
 
-  .scroller {
-    flex: 1;
-    overflow: auto;
-    margin-bottom: var(--two-pane-browser-gutter);
+  .section-title {
+    font-variant: var(--h2-variant);
+    letter-spacing: -0.015em;
+    line-height: var(--h2-line-height);
+    font-size: var(--h2-size);
+    color: var(--h2-color);
+    font-weight: var(--h2-weight);
+    font-style: var(--h2-style);
+    font-family: var(--h2-font);
+    margin: var(--two-pane-browser-gutter) 0;
   }
 `

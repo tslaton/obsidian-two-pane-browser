@@ -1,12 +1,13 @@
 // Libraries
 import * as React from 'react'
-import styled from '@emotion/styled'
-import { LucideIcon, FoldersIcon, InboxIcon, HistoryIcon, FilterIcon } from 'lucide-react'
+import { css } from '@emotion/react'
+import classNames from 'classnames'
 // Modules
 import { FilterMeta, activateFilter } from '../../features/filters/filtersSlice'
 import { deselectAllFolders } from '../folders/foldersSlice'
 import { selectFileCountsByFilter } from '../files/filesSlice'
 import { useAppDispatch, useAppSelector } from '../../plugin/hooks'
+import ObsidianIcon from '../../common/ObsidianIcon'
 
 // NOTE: Currently pretty similar/redundant to Folder
 export default function Filter(filter: FilterMeta) {  
@@ -19,33 +20,31 @@ export default function Filter(filter: FilterMeta) {
     dispatch(deselectAllFolders())
   }
 
-  const iconMap: Record<string, LucideIcon> = {
-    all: FoldersIcon,
-    inbox: InboxIcon,
-    recents: HistoryIcon,
+  const iconMap: Record<string, string> = {
+    all: 'folders',
+    inbox: 'inbox',
+    recents: 'history',
   }
-  const Icon = iconMap[filter.id] || FilterIcon
+  const iconName = iconMap[filter.id] || 'filter'
   
   return (
-    <StyledFilter
-      className={`nav-item ${filter.isActive ? 'is-active' : ''}`}
+    <div
+      className={classNames('nav-item', { 'is-active': filter.isActive })}
+      css={styles}
       onClick={onClick}
-      {...filter} 
     >
-      <div className="clickable-icon">
-        <Icon size={18} />
-      </div>
+      <ObsidianIcon iconName={iconName} />
       <div className="filter-name">
         {filter.name}
       </div>
       <div className="file-count">
         {fileCount}
       </div>
-    </StyledFilter>
+    </div>
   )
 }
 
-const StyledFilter = styled.div<FilterMeta>`  
+const styles = css`
   display: flex;
   flex-direction: horizontal;
   padding: 10px;
@@ -54,10 +53,5 @@ const StyledFilter = styled.div<FilterMeta>`
   .filter-name {
     line-height: 24px;
     flex: 1;
-  }
-
-  .file-count {
-    line-height: 24px;
-    color: var(--text-faint);
   }
 `

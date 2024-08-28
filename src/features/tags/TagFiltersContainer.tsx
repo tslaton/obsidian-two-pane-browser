@@ -1,7 +1,6 @@
 // Libraries
 import * as React from 'react'
-import styled from '@emotion/styled'
-import { XIcon } from 'lucide-react'
+import { css } from '@emotion/react'
 // Modules
 import { useAppSelector, useAppDispatch } from '../../plugin/hooks'
 import TagCategory from '../tags/TagCategory'
@@ -11,6 +10,7 @@ import {
   selectTagCategoryNamesInScope, selectTagNamesInScope, selectMatchMode, updateMatchMode,
   reconcileActiveTagCategoryNames, reconcileFilteredTagNames, clearTagFilters, 
 } from '../tags/tagFiltersSlice'
+import ObsidianIcon from '../../common/ObsidianIcon'
 
 export default function TagFiltersContainer() {
   const dispatch = useAppDispatch()
@@ -40,7 +40,7 @@ export default function TagFiltersContainer() {
   }
 
   return (
-    <StyledTagFiltersContainer>
+    <div css={styles}>
       <div className="tag-filters-flex-controls">
         <label htmlFor="tag-filter-options">Match:</label>
         <select id="tag-filter-options" value={matchMode} onChange={onChangeMatchMode}>
@@ -48,9 +48,7 @@ export default function TagFiltersContainer() {
           <option value="any">Any Selected</option>
         </select>
         {anyTagFiltersAreApplied &&
-          <div title="Clear tag filters" className="clickable-icon" onClick={onClickClearTagFilters}>
-            <XIcon size={18} />
-          </div>
+          <ObsidianIcon title="Clear tag filters" iconName="x" onClick={onClickClearTagFilters} />
         }
       </div>
       <div className="tag-filters-flex-container">
@@ -71,11 +69,11 @@ export default function TagFiltersContainer() {
           />
         )}
       </div>
-    </StyledTagFiltersContainer>
+    </div>
   )
 }
 
-const StyledTagFiltersContainer = styled.div`
+const styles = css`
   label[for="tag-filter-options"] {
     display: block;
   }
@@ -84,6 +82,10 @@ const StyledTagFiltersContainer = styled.div`
     background: none;
     box-shadow: none;
     appearance: auto;
+
+    &:hover {
+      background-color: var(--nav-item-background-hover);
+    }
   }
 
   .tag-filters-flex-controls {
